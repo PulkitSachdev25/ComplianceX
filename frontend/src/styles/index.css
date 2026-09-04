@@ -1,0 +1,432 @@
+/* ==========================================================================
+   GOVERNMENT OF INDIA - OFFICIAL CIVIC DESIGN SYSTEM
+   Ministry of Consumer Affairs & Food Safety and Standards Authority of India
+   Strict Utilitarian Design • No Neons • No Gradients • High Contrast Accessibility
+   ========================================================================== */
+
+:root {
+  --primary-navy: #1A365D;
+  --primary-navy-dark: #0F233D;
+  --primary-navy-light: #2A4365;
+  --bg-slate: #F7FAFC;
+  --card-bg: #FFFFFF;
+  --success-emerald: #2F855A;
+  --success-emerald-bg: #F0FFF4;
+  --error-crimson: #C53030;
+  --error-crimson-bg: #FFF5F5;
+  --warning-amber: #DD6B20;
+  --warning-amber-bg: #FFFAF0;
+  
+  --text-main: #1A202C;
+  --text-muted: #4A5568;
+  --text-light: #718096;
+  
+  --border-light: #E2E8F0;
+  --border-medium: #CBD5E0;
+  --border-dark: #A0AEC0;
+  
+  --font-civic: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-civic);
+  background-color: var(--bg-slate);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Civic Layout Containers */
+.civic-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+/* Header & Official Top Navigation */
+.gov-top-bar {
+  background-color: var(--primary-navy-dark);
+  color: #FFFFFF;
+  padding: 0.35rem 1rem;
+  font-size: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.gov-top-bar-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gov-main-header {
+  background-color: var(--primary-navy);
+  color: #FFFFFF;
+  border-bottom: 3px solid var(--border-medium);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.gov-header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.gov-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.gov-emblem {
+  width: 44px;
+  height: 44px;
+  background-color: #FFFFFF;
+  border-radius: 4px;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  color: var(--primary-navy);
+  font-size: 1.25rem;
+  border: 1px solid var(--border-medium);
+}
+
+.gov-title-group h1 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #FFFFFF;
+}
+
+.gov-title-group p {
+  font-size: 0.75rem;
+  color: #CBD5E0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Mode Navigation Toggle */
+.mode-toggle-group {
+  display: flex;
+  background-color: var(--primary-navy-dark);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 3px;
+}
+
+.mode-toggle-btn {
+  padding: 0.5rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: #CBD5E0;
+  cursor: pointer;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.15s ease;
+}
+
+.mode-toggle-btn.active {
+  background-color: #FFFFFF;
+  color: var(--primary-navy);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.mode-toggle-btn:hover:not(.active) {
+  color: #FFFFFF;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Civic Section Banner */
+.civic-section-banner {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-medium);
+  border-left: 5px solid var(--primary-navy);
+  padding: 1rem 1.25rem;
+  border-radius: 2px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.banner-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary-navy);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.banner-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+/* Cards & Tables */
+.civic-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-medium);
+  border-radius: 2px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.civic-card-header {
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.civic-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary-navy);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Civic Buttons */
+.civic-btn {
+  font-family: var(--font-civic);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.civic-btn-primary {
+  background-color: var(--primary-navy);
+  color: #FFFFFF;
+  border-color: var(--primary-navy-dark);
+}
+.civic-btn-primary:hover {
+  background-color: var(--primary-navy-light);
+}
+
+.civic-btn-success {
+  background-color: var(--success-emerald);
+  color: #FFFFFF;
+  border-color: #276749;
+}
+.civic-btn-success:hover {
+  background-color: #276749;
+}
+
+.civic-btn-danger {
+  background-color: var(--error-crimson);
+  color: #FFFFFF;
+  border-color: #9B2C2C;
+}
+.civic-btn-danger:hover {
+  background-color: #9B2C2C;
+}
+
+.civic-btn-outline {
+  background-color: transparent;
+  color: var(--primary-navy);
+  border-color: var(--border-medium);
+}
+.civic-btn-outline:hover {
+  background-color: var(--border-light);
+}
+
+.civic-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Badges */
+.civic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 2px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+}
+
+.badge-compliant {
+  background-color: var(--success-emerald-bg);
+  color: var(--success-emerald);
+  border-color: #9AE6B4;
+}
+
+.badge-violation {
+  background-color: var(--error-crimson-bg);
+  color: var(--error-crimson);
+  border-color: #FEB2B2;
+}
+
+.badge-warning {
+  background-color: var(--warning-amber-bg);
+  color: var(--warning-amber);
+  border-color: #FBD38D;
+}
+
+.badge-neutral {
+  background-color: var(--bg-slate);
+  color: var(--text-muted);
+  border-color: var(--border-medium);
+}
+
+/* Tables */
+.civic-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.civic-table th {
+  background-color: #EDF2F7;
+  color: var(--primary-navy);
+  font-weight: 700;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-medium);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.civic-table td {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+  vertical-align: top;
+}
+
+.civic-table tr:nth-child(even) td {
+  background-color: #FAFAFA;
+}
+
+/* Form Controls */
+.civic-input, .civic-select, .civic-textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  font-family: var(--font-civic);
+  font-size: 0.85rem;
+  border: 1px solid var(--border-medium);
+  border-radius: 2px;
+  background-color: #FFFFFF;
+  color: var(--text-main);
+}
+
+.civic-input:focus, .civic-select:focus, .civic-textarea:focus {
+  outline: none;
+  border-color: var(--primary-navy);
+  box-shadow: 0 0 0 1px var(--primary-navy);
+}
+
+/* Code & Hashes */
+.mono-hash {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--primary-navy);
+  background-color: #EDF2F7;
+  padding: 0.15rem 0.35rem;
+  border-radius: 2px;
+  word-break: break-all;
+  border: 1px solid var(--border-light);
+}
+
+/* Focus Viewfinder Overlay */
+.viewfinder-box {
+  position: relative;
+  background-color: #000000;
+  border: 2px solid var(--border-medium);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.viewfinder-hud {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.viewfinder-reticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  height: 60%;
+  border: 1.5px dashed rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+
+/* Grid Layouts */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .gov-header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .mode-toggle-group {
+    width: 100%;
+  }
+  .mode-toggle-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
