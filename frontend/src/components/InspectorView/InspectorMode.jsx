@@ -6,7 +6,9 @@ import ChainOfCustodyLedger from './ChainOfCustodyLedger';
 import OfflineQueueModal from './OfflineQueueModal';
 import { offlineStorage } from '../../utils/offlineStorage';
 
-export default function InspectorMode({ apiBaseUrl = 'http://localhost:8000' }) {
+export default function InspectorMode({ 
+  apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://compliancex.onrender.com' 
+}) {
   const [presets, setPresets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);

@@ -4,7 +4,9 @@ import ProductUploadCard from './ProductUploadCard';
 import DeceptionVerdictCard from './DeceptionVerdictCard';
 import ComparisonMatrix from './ComparisonMatrix';
 
-export default function CitizenMode({ apiBaseUrl = 'http://localhost:8000' }) {
+export default function CitizenMode({ 
+  apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://compliancex.onrender.com' 
+}) {
   const [productCount, setProductCount] = useState(2);
   const [presets, setPresets] = useState([]);
   const [loading, setLoading] = useState(false);

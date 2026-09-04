@@ -5,7 +5,7 @@ import InspectorMode from './components/InspectorView/InspectorMode';
 import OfflineQueueModal from './components/InspectorView/OfflineQueueModal';
 
 export default function App() {
-  const [currentMode, setCurrentMode] = useState('citizen'); // 'citizen' | 'inspector'
+  const [currentMode, setCurrentMode] = useState('inspector'); // 'inspector' is default | 'citizen'
   const [offlineModalOpen, setOfflineModalOpen] = useState(false);
 
   return (
