@@ -98,7 +98,7 @@ export default function App() {
         >
           <div>
             <div style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '0.85rem' }}>
-              National Food Safety & Legal Metrology Regulatory Portal (भारत सरकार)
+              LMPC Vision – Legal Metrology & Packaged Commodities Regulatory Portal (भारत सरकार)
             </div>
             <div style={{ marginTop: '0.2rem', color: '#A0AEC0' }}>
               Statutory Enforcement under Food Safety and Standards Act, 2006 & Legal Metrology Act, 2009.

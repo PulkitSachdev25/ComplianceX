@@ -58,9 +58,9 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
       <div className="gov-top-bar">
         <div className="gov-top-bar-content">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span>राष्ट्रीय विनियामक एवं उपभोक्ता संरक्षण पोर्टल</span>
+            <span>LMPC Vision | राष्ट्रीय विधिक माप विज्ञान एवं उपभोक्ता संरक्षण पोर्टल</span>
             <span style={{ color: 'rgba(255,255,255,0.4)' }}>|</span>
-            <span>National Food Safety & Legal Metrology Regulatory Portal</span>
+            <span>National Legal Metrology & Packaged Commodities Regulatory Portal</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -110,8 +110,25 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
               <Scale size={28} />
             </div>
             <div className="gov-title-group">
-              <h1>भारत सरकार | Government of India</h1>
-              <p>Ministry of Consumer Affairs, Food & Public Distribution • FSSAI Division</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <h1 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#FFFFFF' }}>LMPC Vision</h1>
+                <span style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  border: '1px solid rgba(255, 255, 255, 0.25)',
+                  color: '#E2E8F0',
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  padding: '2px 6px',
+                  borderRadius: '3px',
+                  textTransform: 'uppercase'
+                }}>
+                  Govt of India
+                </span>
+              </div>
+              <p style={{ margin: '0.2rem 0 0', fontSize: '0.725rem', color: '#CBD5E0', letterSpacing: '0.03em' }}>
+                Ministry of Consumer Affairs, Food & Public Distribution • Legal Metrology & FSSAI Division
+              </p>
             </div>
           </div>
 
