@@ -97,6 +97,26 @@ const PillNav = ({
     return () => window.removeEventListener('resize', onResize);
   }, [items, ease]);
 
+  useEffect(() => {
+    items.forEach((item, i) => {
+      if (item.href === activeHref) {
+        tlRefs.current[i]?.pause(0);
+        activeTweenRefs.current[i]?.kill();
+        const circle = circleRefs.current[i];
+        if (circle) {
+          gsap.set(circle, { scale: 0 });
+        }
+        const pill = navItemsRef.current?.querySelectorAll('.pill')?.[i];
+        if (pill) {
+          const label = pill.querySelector('.pill-label');
+          if (label) gsap.set(label, { clearProps: 'transform,opacity', y: 0, opacity: 1 });
+          const hoverLabel = pill.querySelector('.pill-label-hover');
+          if (hoverLabel) gsap.set(hoverLabel, { clearProps: 'transform,opacity', opacity: 0 });
+        }
+      }
+    });
+  }, [activeHref, items]);
+
   const handleEnter = i => {
     const tl = tlRefs.current[i];
     if (!tl) return;
@@ -217,22 +237,18 @@ const PillNav = ({
                       if (item.onClick) item.onClick(e);
                     }}
                   >
-                    {!isActive && (
-                      <span
-                        className="hover-circle"
-                        aria-hidden="true"
-                        ref={el => {
-                          circleRefs.current[i] = el;
-                        }}
-                      />
-                    )}
+                    <span
+                      className="hover-circle"
+                      aria-hidden="true"
+                      ref={el => {
+                        circleRefs.current[i] = el;
+                      }}
+                    />
                     <span className="label-stack">
                       <span className="pill-label">{item.label}</span>
-                      {!isActive && (
-                        <span className="pill-label-hover" aria-hidden="true">
-                          {item.label}
-                        </span>
-                      )}
+                      <span className="pill-label-hover" aria-hidden="true">
+                        {item.label}
+                      </span>
                     </span>
                   </a>
                 </li>

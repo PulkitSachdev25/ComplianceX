@@ -76,10 +76,27 @@
 }
 
 .pill.is-active {
-  background: #ffffff;
-  color: var(--pill-text, #1A365D);
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  background: #ffffff !important;
+  color: var(--pill-text, #1A365D) !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+}
+
+.pill.is-active .hover-circle {
+  display: none !important;
+}
+
+.pill.is-active .label-stack,
+.pill.is-active .pill-label {
+  color: var(--pill-text, #1A365D) !important;
+  font-weight: 700 !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.pill.is-active .pill-label-hover {
+  display: none !important;
 }
 
 .hover-circle {
