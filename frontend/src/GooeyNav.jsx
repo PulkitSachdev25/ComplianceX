@@ -14,7 +14,6 @@ const GooeyNav = ({
   const containerRef = useRef(null);
   const navRef = useRef(null);
   const filterRef = useRef(null);
-  const textRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(initialActiveIndex);
 
   const noise = (n = 1) => n / 2 - Math.random() * n;
@@ -78,7 +77,7 @@ const GooeyNav = ({
   };
 
   const updateEffectPosition = element => {
-    if (!containerRef.current || !filterRef.current || !textRef.current) return;
+    if (!containerRef.current || !filterRef.current || !element) return;
     const containerRect = containerRef.current.getBoundingClientRect();
     const pos = element.getBoundingClientRect();
 
@@ -89,41 +88,29 @@ const GooeyNav = ({
       height: `${pos.height}px`
     };
     Object.assign(filterRef.current.style, styles);
-    Object.assign(textRef.current.style, styles);
-    textRef.current.innerText = element.innerText;
   };
 
   const handleClick = (e, index) => {
-    const liEl = e.currentTarget;
-    if (activeIndex === index) return;
+    const target = e.currentTarget;
+    const liEl = target.tagName === 'LI' ? target : target.closest('li');
+    if (!liEl) return;
 
-    setActiveIndex(index);
-    updateEffectPosition(liEl);
+    if (activeIndex !== index) {
+      setActiveIndex(index);
+      updateEffectPosition(liEl);
 
-    if (filterRef.current) {
-      const particles = filterRef.current.querySelectorAll('.particle');
-      particles.forEach(p => filterRef.current.removeChild(p));
-    }
-
-    if (textRef.current) {
-      textRef.current.classList.remove('active');
-
-      void textRef.current.offsetWidth;
-      textRef.current.classList.add('active');
-    }
-
-    if (filterRef.current) {
-      makeParticles(filterRef.current);
+      if (filterRef.current) {
+        const particles = filterRef.current.querySelectorAll('.particle');
+        particles.forEach(p => filterRef.current?.removeChild(p));
+        makeParticles(filterRef.current);
+      }
     }
   };
 
   const handleKeyDown = (e, index) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      const liEl = e.currentTarget.parentElement;
-      if (liEl) {
-        handleClick({ currentTarget: liEl }, index);
-      }
+      handleClick(e, index);
     }
   };
 
@@ -138,7 +125,6 @@ const GooeyNav = ({
     const activeLi = navRef.current.querySelectorAll('li')[activeIndex];
     if (activeLi) {
       updateEffectPosition(activeLi);
-      textRef.current?.classList.add('active');
     }
 
     const resizeObserver = new ResizeObserver(() => {
@@ -154,12 +140,12 @@ const GooeyNav = ({
 
   return (
     <div className="gooey-nav-container" ref={containerRef}>
-      {/* SVG Gooey Filter definition - eliminates black box artifacts on all browsers */}
+      {/* Universal SVG Gooey Filter */}
       <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }} aria-hidden="true">
         <defs>
           <filter id="gooey-filter">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
-            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -8" result="goo" />
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
             <feComposite in="SourceGraphic" in2="goo" operator="atop" />
           </filter>
         </defs>
@@ -183,7 +169,6 @@ const GooeyNav = ({
         </ul>
       </nav>
       <span className="effect filter" ref={filterRef} />
-      <span className="effect text" ref={textRef} />
     </div>
   );
 };
