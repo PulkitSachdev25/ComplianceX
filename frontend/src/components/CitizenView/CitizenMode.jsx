@@ -3,6 +3,7 @@ import { Sliders, Search, RefreshCw, AlertCircle, Sparkles } from 'lucide-react'
 import ProductUploadCard from './ProductUploadCard';
 import DeceptionVerdictCard from './DeceptionVerdictCard';
 import ComparisonMatrix from './ComparisonMatrix';
+import { AnimatedItem } from '../../AnimatedList';
 
 export default function CitizenMode({ 
   apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://compliancex.onrender.com' 
@@ -228,7 +229,9 @@ export default function CitizenMode({
             }}
           >
             {analysisResults.products.map((res, idx) => (
-              <DeceptionVerdictCard key={idx} result={res} slotIndex={idx + 1} />
+              <AnimatedItem key={idx} index={idx} delay={idx * 0.1}>
+                <DeceptionVerdictCard result={res} slotIndex={idx + 1} />
+              </AnimatedItem>
             ))}
           </div>
 

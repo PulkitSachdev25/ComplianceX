@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, CheckCircle, Info, ShieldAlert, Zap, AlertCircle } from 'lucide-react';
+import AnimatedList from '../../AnimatedList';
 
 export default function DeceptionVerdictCard({ result, slotIndex }) {
   if (!result) return null;
@@ -135,10 +136,11 @@ export default function DeceptionVerdictCard({ result, slotIndex }) {
             <AlertTriangle size={15} color="#C53030" />
             Statutory Red Flags & Deception Discrepancies ({flags.length})
           </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {flags.map((flag, idx) => (
+          <AnimatedList
+            items={flags}
+            showGradients={false}
+            renderItem={(flag) => (
               <div
-                key={idx}
                 style={{
                   backgroundColor: flag.severity === 'CRITICAL' ? '#FFF5F5' : '#FFFAF0',
                   borderLeft: `4px solid ${flag.severity === 'CRITICAL' ? '#C53030' : '#DD6B20'}`,
@@ -146,7 +148,8 @@ export default function DeceptionVerdictCard({ result, slotIndex }) {
                   borderRight: '1px solid #E2E8F0',
                   borderBottom: '1px solid #E2E8F0',
                   padding: '0.65rem 0.85rem',
-                  borderRadius: '2px'
+                  borderRadius: '3px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
@@ -165,8 +168,8 @@ export default function DeceptionVerdictCard({ result, slotIndex }) {
                   <strong>Statutory Ref:</strong> {flag.regulation}
                 </div>
               </div>
-            ))}
-          </div>
+            )}
+          />
         </div>
       ) : (
         <div

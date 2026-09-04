@@ -1,20 +1,21 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion, useInView } from 'motion/react';
 import './AnimatedList.css';
 
-const AnimatedItem = ({ children, delay = 0, index, onMouseEnter, onClick }) => {
+export const AnimatedItem = ({ children, delay = 0, index, onMouseEnter, onClick, className = '', style = {} }) => {
   const ref = useRef(null);
-  const inView = useInView(ref, { amount: 0.5, triggerOnce: false });
+  const inView = useInView(ref, { amount: 0.2, triggerOnce: false });
   return (
     <motion.div
       ref={ref}
       data-index={index}
       onMouseEnter={onMouseEnter}
       onClick={onClick}
-      initial={{ scale: 0.7, opacity: 0 }}
-      animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
-      transition={{ duration: 0.2, delay }}
-      style={{ marginBottom: '1rem', cursor: 'pointer' }}
+      initial={{ scale: 0.94, opacity: 0, y: 8 }}
+      animate={inView ? { scale: 1, opacity: 1, y: 0 } : { scale: 0.94, opacity: 0, y: 8 }}
+      transition={{ duration: 0.25, delay }}
+      className={className}
+      style={{ marginBottom: '0.75rem', cursor: 'pointer', ...style }}
     >
       {children}
     </motion.div>
@@ -22,24 +23,9 @@ const AnimatedItem = ({ children, delay = 0, index, onMouseEnter, onClick }) => 
 };
 
 const AnimatedList = ({
-  items = [
-    'Item 1',
-    'Item 2',
-    'Item 3',
-    'Item 4',
-    'Item 5',
-    'Item 6',
-    'Item 7',
-    'Item 8',
-    'Item 9',
-    'Item 10',
-    'Item 11',
-    'Item 12',
-    'Item 13',
-    'Item 14',
-    'Item 15'
-  ],
+  items = [],
   onItemSelect,
+  renderItem,
   showGradients = true,
   enableArrowNavigation = true,
   className = '',
@@ -75,7 +61,7 @@ const AnimatedList = ({
   }, []);
 
   useEffect(() => {
-    if (!enableArrowNavigation) return;
+    if (!enableArrowNavigation || !items.length) return;
     const handleKeyDown = e => {
       if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
         e.preventDefault();
@@ -127,14 +113,18 @@ const AnimatedList = ({
         {items.map((item, index) => (
           <AnimatedItem
             key={index}
-            delay={0.1}
+            delay={Math.min(index * 0.04, 0.25)}
             index={index}
             onMouseEnter={() => handleItemMouseEnter(index)}
             onClick={() => handleItemClick(item, index)}
           >
-            <div className={`item ${selectedIndex === index ? 'selected' : ''} ${itemClassName}`}>
-              <p className="item-text">{typeof item === 'object' && item !== null ? item.label || JSON.stringify(item) : item}</p>
-            </div>
+            {renderItem ? (
+              renderItem(item, index, selectedIndex === index)
+            ) : (
+              <div className={`item ${selectedIndex === index ? 'selected' : ''} ${itemClassName}`}>
+                <p className="item-text">{typeof item === 'object' && item !== null ? item.label || item.title || JSON.stringify(item) : item}</p>
+              </div>
+            )}
           </AnimatedItem>
         ))}
       </div>

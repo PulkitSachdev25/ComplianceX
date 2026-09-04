@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Database, RefreshCw, Trash2, X, CheckCircle, AlertCircle, CloudUpload } from 'lucide-react';
 import { offlineStorage } from '../../utils/offlineStorage';
+import AnimatedList from '../../AnimatedList';
 
 export default function OfflineQueueModal({ isOpen, onClose, apiBaseUrl = 'http://localhost:8000' }) {
   const [queue, setQueue] = useState([]);
@@ -113,37 +114,39 @@ export default function OfflineQueueModal({ isOpen, onClose, apiBaseUrl = 'http:
               </p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {queue.map((item, idx) => (
+            <AnimatedList
+              items={queue}
+              className="offline-queue-animated-list"
+              renderItem={(item) => (
                 <div
-                  key={idx}
                   style={{
                     backgroundColor: '#F7FAFC',
                     border: '1px solid #CBD5E0',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '2px',
+                    padding: '0.75rem 0.95rem',
+                    borderRadius: '4px',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1A365D' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1A365D' }}>
                       {item.commodity_name || 'Statutory Inspection Docket'}
                     </div>
-                    <div style={{ fontSize: '0.7rem', color: '#718096', fontFamily: 'monospace' }}>
+                    <div style={{ fontSize: '0.72rem', color: '#718096', fontFamily: 'monospace', marginTop: '2px' }}>
                       {item.docket_id || item.offline_id} • Queued: {new Date(item.queued_at).toLocaleTimeString()}
                     </div>
                   </div>
                   <span
                     className={`civic-badge ${item.is_compliant ? 'badge-compliant' : 'badge-violation'}`}
-                    style={{ fontSize: '0.7rem' }}
+                    style={{ fontSize: '0.72rem' }}
                   >
                     {item.is_compliant ? 'Compliant' : `${item.violations_count || 1} Violations`}
                   </span>
                 </div>
-              ))}
-            </div>
+              )}
+            />
           )}
         </div>
 
