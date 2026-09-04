@@ -1,5 +1,7 @@
 import React from 'react';
 import { AlertTriangle, CheckCircle, Info, ShieldAlert, Zap, AlertCircle } from 'lucide-react';
+import AnimatedList from '../../AnimatedList';
+import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function DeceptionVerdictCard({ result, slotIndex }) {
   if (!result) return null;
@@ -41,7 +43,14 @@ export default function DeceptionVerdictCard({ result, slotIndex }) {
             >
               PRODUCT #{slotIndex}
             </span>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1A365D' }}>{product_name}</h3>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1A365D' }}>
+              <VariableFontHoverByLetter
+                label={product_name}
+                staggerDuration={0.02}
+                fromFontVariationSettings="'wght' 700, 'slnt' 0"
+                toFontVariationSettings="'wght' 900, 'slnt' -10"
+              />
+            </h3>
           </div>
           {brand && <p style={{ fontSize: '0.8rem', color: '#718096' }}>Brand: {brand}</p>}
         </div>
@@ -133,12 +142,18 @@ export default function DeceptionVerdictCard({ result, slotIndex }) {
             }}
           >
             <AlertTriangle size={15} color="#C53030" />
-            Statutory Red Flags & Deception Discrepancies ({flags.length})
+            <VariableFontHoverByLetter
+              label={`Statutory Red Flags & Deception Discrepancies (${flags.length})`}
+              staggerDuration={0.015}
+              fromFontVariationSettings="'wght' 700, 'slnt' 0"
+              toFontVariationSettings="'wght' 900, 'slnt' -10"
+            />
           </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {flags.map((flag, idx) => (
+          <AnimatedList
+            items={flags}
+            showGradients={false}
+            renderItem={(flag) => (
               <div
-                key={idx}
                 style={{
                   backgroundColor: flag.severity === 'CRITICAL' ? '#FFF5F5' : '#FFFAF0',
                   borderLeft: `4px solid ${flag.severity === 'CRITICAL' ? '#C53030' : '#DD6B20'}`,
@@ -146,7 +161,8 @@ export default function DeceptionVerdictCard({ result, slotIndex }) {
                   borderRight: '1px solid #E2E8F0',
                   borderBottom: '1px solid #E2E8F0',
                   padding: '0.65rem 0.85rem',
-                  borderRadius: '2px'
+                  borderRadius: '3px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
@@ -165,8 +181,8 @@ export default function DeceptionVerdictCard({ result, slotIndex }) {
                   <strong>Statutory Ref:</strong> {flag.regulation}
                 </div>
               </div>
-            ))}
-          </div>
+            )}
+          />
         </div>
       ) : (
         <div

@@ -31,6 +31,8 @@ __pycache__/
 *.jpg
 *.jpeg
 *.png
+!frontend/src/assets/*.png
+!frontend/public/*.png
 *.pdf
 node_modules/
 dist/

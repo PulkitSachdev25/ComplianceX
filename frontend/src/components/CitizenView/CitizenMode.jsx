@@ -3,6 +3,9 @@ import { Sliders, Search, RefreshCw, AlertCircle, Sparkles } from 'lucide-react'
 import ProductUploadCard from './ProductUploadCard';
 import DeceptionVerdictCard from './DeceptionVerdictCard';
 import ComparisonMatrix from './ComparisonMatrix';
+import { AnimatedItem } from '../../AnimatedList';
+import GooeyNav from '../../GooeyNav';
+import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function CitizenMode({ 
   apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://compliancex.onrender.com' 
@@ -121,41 +124,58 @@ export default function CitizenMode({
         <div>
           <div className="banner-title">
             <Sparkles size={20} />
-            Citizen Food Safety & Nutritional Deception Scanner
+            <VariableFontHoverByLetter
+              label="Citizen Food Safety & Nutritional Deception Scanner"
+              staggerDuration={0.015}
+              fromFontVariationSettings="'wght' 700, 'slnt' 0"
+              toFontVariationSettings="'wght' 900, 'slnt' -10"
+            />
           </div>
           <div className="banner-desc">
             Cross-checks front-of-pack marketing claims against back-of-pack ingredients under FSSAI Advertising Regulations. Compare 1 to 3 items side-by-side.
           </div>
         </div>
 
-        {/* Product Comparison Slider Control */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', backgroundColor: '#EDF2F7', padding: '0.5rem 0.85rem', borderRadius: '2px', border: '1px solid #CBD5E0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 'bold', color: '#1A365D' }}>
-            <Sliders size={16} />
-            Compare Products:
+        {/* Product Comparison GooeyNav Control */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 700, color: '#1A365D' }}>
+            <Sliders size={15} />
+            <VariableFontHoverByLetter
+              label="Compare Products:"
+              staggerDuration={0.03}
+              fromFontVariationSettings="'wght' 700, 'slnt' 0"
+              toFontVariationSettings="'wght' 900, 'slnt' -10"
+            />
           </div>
-          <input
-            type="range"
-            min="1"
-            max="3"
-            step="1"
-            value={productCount}
-            onChange={handleSliderChange}
-            id="product-comparison-slider"
-            style={{ width: '100px', cursor: 'pointer', accentColor: '#1A365D' }}
+          <GooeyNav
+            items={[
+              {
+                label: "1 Product",
+                href: "#single",
+                onClick: (e) => {
+                  if (e) e.preventDefault();
+                  setProductCount(1);
+                }
+              },
+              {
+                label: "2 Products (Side-by-Side)",
+                href: "#compare2",
+                onClick: (e) => {
+                  if (e) e.preventDefault();
+                  setProductCount(2);
+                }
+              },
+              {
+                label: "3 Multi-Compare",
+                href: "#compare3",
+                onClick: (e) => {
+                  if (e) e.preventDefault();
+                  setProductCount(3);
+                }
+              }
+            ]}
+            initialActiveIndex={productCount - 1}
           />
-          <span
-            style={{
-              backgroundColor: '#1A365D',
-              color: '#FFFFFF',
-              padding: '2px 8px',
-              borderRadius: '2px',
-              fontSize: '0.85rem',
-              fontWeight: 'bold'
-            }}
-          >
-            {productCount} {productCount === 1 ? 'Product' : 'Products'}
-          </span>
         </div>
       </div>
 
@@ -228,7 +248,9 @@ export default function CitizenMode({
             }}
           >
             {analysisResults.products.map((res, idx) => (
-              <DeceptionVerdictCard key={idx} result={res} slotIndex={idx + 1} />
+              <AnimatedItem key={idx} index={idx} delay={idx * 0.1}>
+                <DeceptionVerdictCard result={res} slotIndex={idx + 1} />
+              </AnimatedItem>
             ))}
           </div>
 

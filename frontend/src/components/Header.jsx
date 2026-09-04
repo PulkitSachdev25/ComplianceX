@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Scale, HeartPulse, Wifi, WifiOff, Database, Clock } from 'lucide-react';
 import { offlineStorage } from '../utils/offlineStorage';
+import PillNav from '../PillNav';
+import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
+import shieldLogo from '../assets/lmpc_shield_logo.png';
 
 export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -32,15 +35,34 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
     };
   }, []);
 
+  const navItems = [
+    {
+      label: "Citizen Mode",
+      href: "#citizen",
+      onClick: (e) => {
+        if (e) e.preventDefault();
+        onModeChange('citizen');
+      }
+    },
+    {
+      label: "Inspector Mode",
+      href: "#inspector",
+      onClick: (e) => {
+        if (e) e.preventDefault();
+        onModeChange('inspector');
+      }
+    }
+  ];
+
   return (
     <header className="gov-header-wrapper">
       {/* Top Utility Ribbon */}
       <div className="gov-top-bar">
         <div className="gov-top-bar-content">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span>राष्ट्रीय विनियामक एवं उपभोक्ता संरक्षण पोर्टल</span>
+            <span>राष्ट्रीय विधिक माप विज्ञान एवं उपभोक्ता संरक्षण पोर्टल</span>
             <span style={{ color: 'rgba(255,255,255,0.4)' }}>|</span>
-            <span>National Food Safety & Legal Metrology Regulatory Portal</span>
+            <span>National Legal Metrology & Packaged Commodities Regulatory Portal</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -86,33 +108,98 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
       <div className="gov-main-header">
         <div className="gov-header-inner">
           <div className="gov-brand">
-            <div className="gov-emblem" title="State Emblem of India">
-              <Scale size={28} />
+            <div
+              className="gov-emblem"
+              style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: '6px',
+                padding: '3px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '42px',
+                height: '42px'
+              }}
+              title="LMPC Vision - Statutory Compliance Shield"
+            >
+              <img
+                src={shieldLogo}
+                alt="LMPC Vision Official Shield Logo"
+                style={{ width: '32px', height: '32px', objectFit: 'contain' }}
+              />
             </div>
             <div className="gov-title-group">
-              <h1>भारत सरकार | Government of India</h1>
-              <p>Ministry of Consumer Affairs, Food & Public Distribution • FSSAI Division</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 900, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <span style={{ color: '#38E1D9' }}>
+                    <VariableFontHoverByLetter
+                      label="LMPC"
+                      staggerDuration={0.03}
+                      fromFontVariationSettings="'wght' 800, 'slnt' 0"
+                      toFontVariationSettings="'wght' 900, 'slnt' -10"
+                    />
+                  </span>
+                  <span style={{ color: '#93C5FD' }}>
+                    <VariableFontHoverByLetter
+                      label="Vision"
+                      staggerDuration={0.03}
+                      fromFontVariationSettings="'wght' 800, 'slnt' 0"
+                      toFontVariationSettings="'wght' 900, 'slnt' -10"
+                    />
+                  </span>
+                  <img
+                    src={shieldLogo}
+                    alt=""
+                    aria-hidden="true"
+                    style={{
+                      width: '22px',
+                      height: '22px',
+                      objectFit: 'contain',
+                      marginLeft: '0.2rem',
+                      filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.3))'
+                    }}
+                  />
+                </h1>
+                <span style={{
+                  backgroundColor: 'rgba(56, 225, 217, 0.12)',
+                  border: '1px solid rgba(56, 225, 217, 0.35)',
+                  color: '#A5F3FC',
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  padding: '2px 6px',
+                  borderRadius: '3px',
+                  textTransform: 'uppercase'
+                }}>
+                  Govt of India
+                </span>
+              </div>
+              <p style={{ margin: '0.2rem 0 0', fontSize: '0.725rem', color: '#CBD5E0', letterSpacing: '0.03em' }}>
+                Ministry of Consumer Affairs, Food & Public Distribution • Legal Metrology & FSSAI Division
+              </p>
             </div>
           </div>
 
-          {/* Core View Toggle */}
-          <div className="mode-toggle-group">
-            <button
-              className={`mode-toggle-btn ${currentMode === 'citizen' ? 'active' : ''}`}
-              onClick={() => onModeChange('citizen')}
-              id="toggle-citizen-mode"
-            >
-              <HeartPulse size={16} />
-              Citizen Mode (Nutrition & Claims)
-            </button>
-            <button
-              className={`mode-toggle-btn ${currentMode === 'inspector' ? 'active' : ''}`}
-              onClick={() => onModeChange('inspector')}
-              id="toggle-inspector-mode"
-            >
-              <Shield size={16} />
-              Inspector Mode (Section 36 Enforcement)
-            </button>
+          {/* Civic Mode PillNav Switcher */}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <PillNav
+              logo={
+                <img
+                  src={shieldLogo}
+                  alt="LMPC Vision Logo"
+                  style={{ width: '22px', height: '22px', objectFit: 'contain' }}
+                />
+              }
+              logoAlt="LMPC Vision Logo"
+              items={navItems}
+              activeHref={currentMode === 'citizen' ? '#citizen' : '#inspector'}
+              baseColor="#CBD5E0"
+              pillColor="#0A192F"
+              hoveredPillTextColor="#1A365D"
+              pillTextColor="#1A365D"
+            />
           </div>
         </div>
       </div>
