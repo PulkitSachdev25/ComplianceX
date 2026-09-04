@@ -4,6 +4,7 @@ import ProductUploadCard from './ProductUploadCard';
 import DeceptionVerdictCard from './DeceptionVerdictCard';
 import ComparisonMatrix from './ComparisonMatrix';
 import { AnimatedItem } from '../../AnimatedList';
+import GooeyNav from '../../GooeyNav';
 
 export default function CitizenMode({ 
   apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://compliancex.onrender.com' 
@@ -129,34 +130,41 @@ export default function CitizenMode({
           </div>
         </div>
 
-        {/* Product Comparison Slider Control */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', backgroundColor: '#EDF2F7', padding: '0.5rem 0.85rem', borderRadius: '2px', border: '1px solid #CBD5E0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 'bold', color: '#1A365D' }}>
-            <Sliders size={16} />
+        {/* Product Comparison GooeyNav Control */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 700, color: '#1A365D' }}>
+            <Sliders size={15} />
             Compare Products:
           </div>
-          <input
-            type="range"
-            min="1"
-            max="3"
-            step="1"
-            value={productCount}
-            onChange={handleSliderChange}
-            id="product-comparison-slider"
-            style={{ width: '100px', cursor: 'pointer', accentColor: '#1A365D' }}
+          <GooeyNav
+            items={[
+              {
+                label: "1 Product",
+                href: "#single",
+                onClick: (e) => {
+                  if (e) e.preventDefault();
+                  setProductCount(1);
+                }
+              },
+              {
+                label: "2 Products (Side-by-Side)",
+                href: "#compare2",
+                onClick: (e) => {
+                  if (e) e.preventDefault();
+                  setProductCount(2);
+                }
+              },
+              {
+                label: "3 Multi-Compare",
+                href: "#compare3",
+                onClick: (e) => {
+                  if (e) e.preventDefault();
+                  setProductCount(3);
+                }
+              }
+            ]}
+            initialActiveIndex={productCount - 1}
           />
-          <span
-            style={{
-              backgroundColor: '#1A365D',
-              color: '#FFFFFF',
-              padding: '2px 8px',
-              borderRadius: '2px',
-              fontSize: '0.85rem',
-              fontWeight: 'bold'
-            }}
-          >
-            {productCount} {productCount === 1 ? 'Product' : 'Products'}
-          </span>
         </div>
       </div>
 

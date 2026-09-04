@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Camera, RefreshCw, AlertTriangle, CheckCircle, Upload, Eye, Focus, Sparkles, FlipHorizontal, Play, Square, FastForward } from 'lucide-react';
 import { calculateLaplacianVariance } from '../../utils/laplacian';
 import { computeSha256 } from '../../utils/crypto';
+import GooeyNav from '../../GooeyNav';
 
 // Statutory 4 Panels configuration referencing scanner_backend
 const PANELS_CONFIG = [
@@ -360,6 +361,25 @@ export default function CameraRig({
           </select>
         </div>
       </div>
+
+      {/* Standard Test Packages Quick GooeyNav Switcher */}
+      {presets && presets.length > 0 && (
+        <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1A365D', textTransform: 'uppercase' }}>
+            Test Package Dockets:
+          </span>
+          <GooeyNav
+            items={presets.map(p => ({
+              label: `${p.name} (${p.violation})`,
+              href: `#${p.key}`,
+              onClick: (e) => {
+                if (e) e.preventDefault();
+                onApplyPreset(p.key);
+              }
+            }))}
+          />
+        </div>
+      )}
 
       {/* 4-Panel Selection Tabs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
