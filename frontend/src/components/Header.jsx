@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Shield, Scale, HeartPulse, Wifi, WifiOff, Database, Clock } from 'lucide-react';
 import { offlineStorage } from '../utils/offlineStorage';
 import PillNav from '../PillNav';
+import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -111,7 +112,14 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
             </div>
             <div className="gov-title-group">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <h1 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#FFFFFF' }}>LMPC Vision</h1>
+                <h1 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#FFFFFF' }}>
+                  <VariableFontHoverByLetter
+                    label="LMPC Vision"
+                    staggerDuration={0.03}
+                    fromFontVariationSettings="'wght' 700, 'slnt' 0"
+                    toFontVariationSettings="'wght' 900, 'slnt' -10"
+                  />
+                </h1>
                 <span style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.15)',
                   border: '1px solid rgba(255, 255, 255, 0.25)',
