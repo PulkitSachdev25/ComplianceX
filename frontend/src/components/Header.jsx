@@ -3,7 +3,7 @@ import { Shield, Scale, HeartPulse, Wifi, WifiOff, Database, Clock } from 'lucid
 import { offlineStorage } from '../utils/offlineStorage';
 import PillNav from '../PillNav';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
-import { LMPCStarIcon } from './LMPCVisionLogo';
+import shieldLogo from '../assets/lmpc_shield_logo.png';
 
 export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -111,13 +111,24 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
             <div
               className="gov-emblem"
               style={{
-                backgroundColor: '#071529',
-                borderColor: 'rgba(56, 225, 217, 0.4)',
-                boxShadow: '0 0 12px rgba(56, 225, 217, 0.18)'
+                backgroundColor: '#FFFFFF',
+                borderRadius: '6px',
+                padding: '3px',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '42px',
+                height: '42px'
               }}
-              title="LMPC Vision - Official Emblem"
+              title="LMPC Vision - Statutory Compliance Shield"
             >
-              <LMPCStarIcon size={30} color="#38E1D9" />
+              <img
+                src={shieldLogo}
+                alt="LMPC Vision Official Shield Logo"
+                style={{ width: '32px', height: '32px', objectFit: 'contain' }}
+              />
             </div>
             <div className="gov-title-group">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
@@ -138,7 +149,18 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
                       toFontVariationSettings="'wght' 900, 'slnt' -10"
                     />
                   </span>
-                  <LMPCStarIcon size={20} color="#FFFFFF" style={{ marginLeft: '0.15rem', opacity: 0.9 }} />
+                  <img
+                    src={shieldLogo}
+                    alt=""
+                    aria-hidden="true"
+                    style={{
+                      width: '22px',
+                      height: '22px',
+                      objectFit: 'contain',
+                      marginLeft: '0.2rem',
+                      filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.3))'
+                    }}
+                  />
                 </h1>
                 <span style={{
                   backgroundColor: 'rgba(56, 225, 217, 0.12)',
@@ -163,7 +185,13 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
           {/* Civic Mode PillNav Switcher */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <PillNav
-              logo={<LMPCStarIcon size={18} color="#38E1D9" />}
+              logo={
+                <img
+                  src={shieldLogo}
+                  alt="LMPC Vision Logo"
+                  style={{ width: '22px', height: '22px', objectFit: 'contain' }}
+                />
+              }
               logoAlt="LMPC Vision Logo"
               items={navItems}
               activeHref={currentMode === 'citizen' ? '#citizen' : '#inspector'}
