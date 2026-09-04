@@ -3,6 +3,7 @@ import { Shield, Scale, HeartPulse, Wifi, WifiOff, Database, Clock } from 'lucid
 import { offlineStorage } from '../utils/offlineStorage';
 import PillNav from '../PillNav';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
+import { LMPCStarIcon } from './LMPCVisionLogo';
 
 export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -107,23 +108,42 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
       <div className="gov-main-header">
         <div className="gov-header-inner">
           <div className="gov-brand">
-            <div className="gov-emblem" title="State Emblem of India">
-              <Scale size={28} />
+            <div
+              className="gov-emblem"
+              style={{
+                backgroundColor: '#071529',
+                borderColor: 'rgba(56, 225, 217, 0.4)',
+                boxShadow: '0 0 12px rgba(56, 225, 217, 0.18)'
+              }}
+              title="LMPC Vision - Official Emblem"
+            >
+              <LMPCStarIcon size={30} color="#38E1D9" />
             </div>
             <div className="gov-title-group">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <h1 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#FFFFFF' }}>
-                  <VariableFontHoverByLetter
-                    label="LMPC Vision"
-                    staggerDuration={0.03}
-                    fromFontVariationSettings="'wght' 700, 'slnt' 0"
-                    toFontVariationSettings="'wght' 900, 'slnt' -10"
-                  />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 900, letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <span style={{ color: '#38E1D9' }}>
+                    <VariableFontHoverByLetter
+                      label="LMPC"
+                      staggerDuration={0.03}
+                      fromFontVariationSettings="'wght' 800, 'slnt' 0"
+                      toFontVariationSettings="'wght' 900, 'slnt' -10"
+                    />
+                  </span>
+                  <span style={{ color: '#93C5FD' }}>
+                    <VariableFontHoverByLetter
+                      label="Vision"
+                      staggerDuration={0.03}
+                      fromFontVariationSettings="'wght' 800, 'slnt' 0"
+                      toFontVariationSettings="'wght' 900, 'slnt' -10"
+                    />
+                  </span>
+                  <LMPCStarIcon size={20} color="#FFFFFF" style={{ marginLeft: '0.15rem', opacity: 0.9 }} />
                 </h1>
                 <span style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
-                  color: '#E2E8F0',
+                  backgroundColor: 'rgba(56, 225, 217, 0.12)',
+                  border: '1px solid rgba(56, 225, 217, 0.35)',
+                  color: '#A5F3FC',
                   fontSize: '0.65rem',
                   fontWeight: 700,
                   letterSpacing: '0.05em',
@@ -143,8 +163,8 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
           {/* Civic Mode PillNav Switcher */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <PillNav
-              logo={<Scale size={16} color="#FFFFFF" />}
-              logoAlt="Government Emblem"
+              logo={<LMPCStarIcon size={18} color="#38E1D9" />}
+              logoAlt="LMPC Vision Logo"
               items={navItems}
               activeHref={currentMode === 'citizen' ? '#citizen' : '#inspector'}
               baseColor="#CBD5E0"
