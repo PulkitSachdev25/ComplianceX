@@ -4,6 +4,7 @@ import CitizenMode from './components/CitizenView/CitizenMode';
 import InspectorMode from './components/InspectorView/InspectorMode';
 import OfflineQueueModal from './components/InspectorView/OfflineQueueModal';
 import AnimatedList from './AnimatedList';
+import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function App() {
   const [currentMode, setCurrentMode] = useState('citizen'); // default to citizen or inspector
@@ -49,7 +50,13 @@ export default function App() {
           }}>
             <div style={{ borderBottom: '1px solid #EDF2F7', paddingBottom: '0.75rem', marginBottom: '1.25rem' }}>
               <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1A365D', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                📋 Statutory Rule & Verification Matrix
+                <span>📋</span>
+                <VariableFontHoverByLetter
+                  label="Statutory Rule & Verification Matrix"
+                  staggerDuration={0.02}
+                  fromFontVariationSettings="'wght' 700, 'slnt' 0"
+                  toFontVariationSettings="'wght' 900, 'slnt' -10"
+                />
               </h3>
               <p style={{ fontSize: '0.8rem', color: '#718096', margin: '0.25rem 0 0' }}>
                 Interactive scroll-animated statutory checklist powered by <strong>AnimatedList</strong>. Use arrow keys (<kbd>↑</kbd> <kbd>↓</kbd>) or click items to inspect.

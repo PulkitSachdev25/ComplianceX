@@ -1,5 +1,6 @@
 import React from 'react';
 import { Award, AlertCircle, ArrowRight } from 'lucide-react';
+import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function ComparisonMatrix({ comparison, products }) {
   if (!comparison || !products || products.length < 2) return null;
@@ -10,7 +11,12 @@ export default function ComparisonMatrix({ comparison, products }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Award size={20} color="#1A365D" />
           <span className="civic-card-title" style={{ margin: 0 }}>
-            Side-by-Side Product Comparison Matrix ({products.length} Products)
+            <VariableFontHoverByLetter
+              label={`Side-by-Side Product Comparison Matrix (${products.length} Products)`}
+              staggerDuration={0.015}
+              fromFontVariationSettings="'wght' 700, 'slnt' 0"
+              toFontVariationSettings="'wght' 900, 'slnt' -10"
+            />
           </span>
         </div>
         <span className="civic-badge badge-neutral" style={{ fontSize: '0.7rem' }}>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, CheckCircle, Info, ShieldAlert, Zap, AlertCircle } from 'lucide-react';
 import AnimatedList from '../../AnimatedList';
+import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function DeceptionVerdictCard({ result, slotIndex }) {
   if (!result) return null;
@@ -42,7 +43,14 @@ export default function DeceptionVerdictCard({ result, slotIndex }) {
             >
               PRODUCT #{slotIndex}
             </span>
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1A365D' }}>{product_name}</h3>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1A365D' }}>
+              <VariableFontHoverByLetter
+                label={product_name}
+                staggerDuration={0.02}
+                fromFontVariationSettings="'wght' 700, 'slnt' 0"
+                toFontVariationSettings="'wght' 900, 'slnt' -10"
+              />
+            </h3>
           </div>
           {brand && <p style={{ fontSize: '0.8rem', color: '#718096' }}>Brand: {brand}</p>}
         </div>
@@ -134,7 +142,12 @@ export default function DeceptionVerdictCard({ result, slotIndex }) {
             }}
           >
             <AlertTriangle size={15} color="#C53030" />
-            Statutory Red Flags & Deception Discrepancies ({flags.length})
+            <VariableFontHoverByLetter
+              label={`Statutory Red Flags & Deception Discrepancies (${flags.length})`}
+              staggerDuration={0.015}
+              fromFontVariationSettings="'wght' 700, 'slnt' 0"
+              toFontVariationSettings="'wght' 900, 'slnt' -10"
+            />
           </h4>
           <AnimatedList
             items={flags}

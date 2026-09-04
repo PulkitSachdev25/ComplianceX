@@ -5,6 +5,7 @@ import DeceptionVerdictCard from './DeceptionVerdictCard';
 import ComparisonMatrix from './ComparisonMatrix';
 import { AnimatedItem } from '../../AnimatedList';
 import GooeyNav from '../../GooeyNav';
+import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function CitizenMode({ 
   apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://compliancex.onrender.com' 
@@ -123,7 +124,12 @@ export default function CitizenMode({
         <div>
           <div className="banner-title">
             <Sparkles size={20} />
-            Citizen Food Safety & Nutritional Deception Scanner
+            <VariableFontHoverByLetter
+              label="Citizen Food Safety & Nutritional Deception Scanner"
+              staggerDuration={0.015}
+              fromFontVariationSettings="'wght' 700, 'slnt' 0"
+              toFontVariationSettings="'wght' 900, 'slnt' -10"
+            />
           </div>
           <div className="banner-desc">
             Cross-checks front-of-pack marketing claims against back-of-pack ingredients under FSSAI Advertising Regulations. Compare 1 to 3 items side-by-side.
@@ -134,7 +140,12 @@ export default function CitizenMode({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', fontWeight: 700, color: '#1A365D' }}>
             <Sliders size={15} />
-            Compare Products:
+            <VariableFontHoverByLetter
+              label="Compare Products:"
+              staggerDuration={0.03}
+              fromFontVariationSettings="'wght' 700, 'slnt' 0"
+              toFontVariationSettings="'wght' 900, 'slnt' -10"
+            />
           </div>
           <GooeyNav
             items={[

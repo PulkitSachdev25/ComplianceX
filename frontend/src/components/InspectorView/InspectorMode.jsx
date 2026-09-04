@@ -5,6 +5,7 @@ import StatutoryAuditCard from './StatutoryAuditCard';
 import ChainOfCustodyLedger from './ChainOfCustodyLedger';
 import OfflineQueueModal from './OfflineQueueModal';
 import { offlineStorage } from '../../utils/offlineStorage';
+import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function InspectorMode({ 
   apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://compliancex.onrender.com' 
@@ -191,7 +192,12 @@ export default function InspectorMode({
         <div>
           <div className="banner-title">
             <Shield size={20} />
-            Legal Metrology Statutory Enforcement & Compounding Division
+            <VariableFontHoverByLetter
+              label="Legal Metrology Statutory Enforcement & Compounding Division"
+              staggerDuration={0.015}
+              fromFontVariationSettings="'wght' 700, 'slnt' 0"
+              toFontVariationSettings="'wght' 900, 'slnt' -10"
+            />
           </div>
           <div className="banner-desc">
             Statutory audits under Section 36(1) Legal Metrology Act, 2009 & Packaged Commodities Rules, 2011. 4-Panel evidentiary rig, USP math fraud validation, and SHA-256 Chain of Custody.

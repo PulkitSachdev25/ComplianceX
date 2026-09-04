@@ -1,5 +1,6 @@
 import React from 'react';
 import { ShieldAlert, CheckCircle, AlertTriangle, Scale, Calculator, DollarSign } from 'lucide-react';
+import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function StatutoryAuditCard({ auditData }) {
   if (!auditData) return null;
@@ -30,7 +31,12 @@ export default function StatutoryAuditCard({ auditData }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Scale size={20} color="#1A365D" />
             <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1A365D' }}>
-              Legal Metrology (Packaged Commodities) Statutory Audit
+              <VariableFontHoverByLetter
+                label="Legal Metrology (Packaged Commodities) Statutory Audit"
+                staggerDuration={0.015}
+                fromFontVariationSettings="'wght' 700, 'slnt' 0"
+                toFontVariationSettings="'wght' 900, 'slnt' -10"
+              />
             </h3>
           </div>
           <p style={{ fontSize: '0.8rem', color: '#718096', marginTop: '2px' }}>
