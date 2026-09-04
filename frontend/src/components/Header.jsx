@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Scale, HeartPulse, Wifi, WifiOff, Database, Clock } from 'lucide-react';
 import { offlineStorage } from '../utils/offlineStorage';
-import GooeyNav from '../GooeyNav';
+import PillNav from '../PillNav';
 
 export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -115,11 +115,17 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
             </div>
           </div>
 
-          {/* Civic Mode Switcher */}
+          {/* Civic Mode PillNav Switcher */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <GooeyNav
+            <PillNav
+              logo={<Scale size={16} color="#FFFFFF" />}
+              logoAlt="Government Emblem"
               items={navItems}
-              initialActiveIndex={currentMode === 'citizen' ? 0 : 1}
+              activeHref={currentMode === 'citizen' ? '#citizen' : '#inspector'}
+              baseColor="#CBD5E0"
+              pillColor="#0A192F"
+              hoveredPillTextColor="#1A365D"
+              pillTextColor="#1A365D"
             />
           </div>
         </div>
