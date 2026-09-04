@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Scale, HeartPulse, Wifi, WifiOff, Database, Clock } from 'lucide-react';
 import { offlineStorage } from '../utils/offlineStorage';
+import GooeyNav from '../GooeyNav';
 
 export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -31,6 +32,25 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
       clearInterval(interval);
     };
   }, []);
+
+  const navItems = [
+    {
+      label: "Citizen Mode",
+      href: "#citizen",
+      onClick: (e) => {
+        if (e) e.preventDefault();
+        onModeChange('citizen');
+      }
+    },
+    {
+      label: "Inspector Mode",
+      href: "#inspector",
+      onClick: (e) => {
+        if (e) e.preventDefault();
+        onModeChange('inspector');
+      }
+    }
+  ];
 
   return (
     <header className="gov-header-wrapper">
@@ -95,24 +115,18 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
             </div>
           </div>
 
-          {/* Core View Toggle */}
-          <div className="mode-toggle-group">
-            <button
-              className={`mode-toggle-btn ${currentMode === 'citizen' ? 'active' : ''}`}
-              onClick={() => onModeChange('citizen')}
-              id="toggle-citizen-mode"
-            >
-              <HeartPulse size={16} />
-              Citizen Mode (Nutrition & Claims)
-            </button>
-            <button
-              className={`mode-toggle-btn ${currentMode === 'inspector' ? 'active' : ''}`}
-              onClick={() => onModeChange('inspector')}
-              id="toggle-inspector-mode"
-            >
-              <Shield size={16} />
-              Inspector Mode (Section 36 Enforcement)
-            </button>
+          {/* Liquid Gooey Navigation Mode Switcher */}
+          <div className="mode-toggle-group-gooey" style={{ display: 'flex', alignItems: 'center' }}>
+            <GooeyNav
+              items={navItems}
+              initialActiveIndex={currentMode === 'citizen' ? 0 : 1}
+              particleCount={15}
+              particleDistances={[90, 10]}
+              particleR={100}
+              animationTime={600}
+              timeVariance={300}
+              colors={[1, 2, 3, 1, 2, 3, 1, 4]}
+            />
           </div>
         </div>
       </div>
