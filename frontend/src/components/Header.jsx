@@ -60,7 +60,7 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
       <div className="gov-top-bar">
         <div className="gov-top-bar-content">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <span>LMPC Vision | राष्ट्रीय विधिक माप विज्ञान एवं उपभोक्ता संरक्षण पोर्टल</span>
+            <span>राष्ट्रीय विधिक माप विज्ञान एवं उपभोक्ता संरक्षण पोर्टल</span>
             <span style={{ color: 'rgba(255,255,255,0.4)' }}>|</span>
             <span>National Legal Metrology & Packaged Commodities Regulatory Portal</span>
           </div>

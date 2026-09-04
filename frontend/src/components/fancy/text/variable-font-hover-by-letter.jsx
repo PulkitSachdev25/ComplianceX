@@ -87,6 +87,7 @@ const VariableFontHoverByLetter = ({
     <motion.span
       className={`inline-block ${className}`.trim()}
       style={{
+        position: 'relative',
         fontVariationSettings: fromFontVariationSettings,
         cursor: 'pointer',
         ...style
@@ -97,7 +98,22 @@ const VariableFontHoverByLetter = ({
       ref={scope}
       {...props}
     >
-      <span className="sr-only">{label}</span>
+      <span
+        className="sr-only"
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: 0,
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: 0
+        }}
+      >
+        {label}
+      </span>
 
       {label.split("").map((letter, i) => (
         <motion.span
