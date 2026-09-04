@@ -35,7 +35,7 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
 
   const navItems = [
     {
-      label: "Citizen Mode (Nutrition & Claims)",
+      label: "Citizen Mode",
       href: "#citizen",
       onClick: (e) => {
         if (e) e.preventDefault();
@@ -43,7 +43,7 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
       }
     },
     {
-      label: "Inspector Mode (Section 36 Enforcement)",
+      label: "Inspector Mode",
       href: "#inspector",
       onClick: (e) => {
         if (e) e.preventDefault();

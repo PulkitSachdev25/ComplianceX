@@ -364,13 +364,13 @@ export default function CameraRig({
 
       {/* Standard Test Packages Quick GooeyNav Switcher */}
       {presets && presets.length > 0 && (
-        <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+        <div style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#1A365D', textTransform: 'uppercase' }}>
-            Test Package Dockets:
+            Quick Dockets:
           </span>
           <GooeyNav
             items={presets.map(p => ({
-              label: `${p.name} (${p.violation})`,
+              label: p.name,
               href: `#${p.key}`,
               onClick: (e) => {
                 if (e) e.preventDefault();
