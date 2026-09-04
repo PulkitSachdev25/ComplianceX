@@ -1,177 +1,50 @@
-:root {
-  --color-1: #a855f7;
-  --color-2: #ec4899;
-  --color-3: #38bdf8;
-  --color-4: #34d399;
+.simple-nav-bar {
+  display: inline-flex;
+  align-items: center;
 }
 
-.gooey-nav-container {
-  position: relative;
-  display: inline-block;
-  isolation: isolate;
-}
-
-.gooey-nav-container nav {
+.simple-nav-list {
   display: flex;
-  position: relative;
-  z-index: 2;
-}
-
-.gooey-nav-container nav ul {
-  display: flex;
-  gap: 0.35rem;
+  align-items: center;
+  gap: 0.25rem;
   list-style: none;
-  padding: 0.3rem 0.4rem;
+  padding: 4px;
   margin: 0;
-  position: relative;
-  background: rgba(10, 25, 47, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(10, 25, 47, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 9999px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
-.gooey-nav-container nav ul li {
+.simple-nav-item {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   border-radius: 9999px;
-  position: relative;
-  isolation: isolate;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: #CBD5E0;
-  font-weight: 600;
+}
+
+.simple-nav-item a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1.15rem;
   font-size: 0.8125rem;
-  letter-spacing: 0.01em;
-}
-
-.gooey-nav-container nav ul li a {
-  display: inline-block;
-  padding: 0.45rem 1rem;
+  font-weight: 600;
+  color: #CBD5E0;
   text-decoration: none;
-  color: inherit;
-  white-space: nowrap;
-  position: relative;
-  z-index: 2;
-  transition: color 0.2s ease;
-}
-
-.gooey-nav-container nav ul li:hover:not(.active) {
-  color: #FFFFFF;
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
-.gooey-nav-container nav ul li::after {
-  content: '';
-  position: absolute;
-  inset: 0;
   border-radius: 9999px;
-  background: #FFFFFF;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  opacity: 0;
-  transform: scale(0.85);
-  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  z-index: 1;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.gooey-nav-container nav ul li.active {
+.simple-nav-item:hover:not(.active) a {
+  color: #FFFFFF;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.simple-nav-item.active a {
+  background-color: #FFFFFF;
   color: #1A365D;
   font-weight: 700;
-}
-
-.gooey-nav-container nav ul li.active::after {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* Gooey Particle & Liquid Bubble Effect Layer */
-.gooey-nav-container .effect {
-  position: absolute;
-  pointer-events: none;
-  display: grid;
-  place-items: center;
-  z-index: 3;
-}
-
-.gooey-nav-container .effect.filter {
-  filter: url(#gooey-filter);
-}
-
-.particle,
-.point {
-  display: block;
-  opacity: 0;
-  width: 16px;
-  height: 16px;
-  border-radius: 100%;
-  transform-origin: center;
-}
-
-.particle {
-  --time: 5s;
-  position: absolute;
-  top: calc(50% - 8px);
-  left: calc(50% - 8px);
-  animation: particle calc(var(--time)) ease 1 -350ms;
-}
-
-.point {
-  background: var(--color);
-  opacity: 1;
-  animation: point calc(var(--time)) ease 1 -350ms;
-}
-
-@keyframes particle {
-  0% {
-    transform: rotate(0deg) translate(calc(var(--start-x)), calc(var(--start-y)));
-    opacity: 1;
-    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
-  }
-
-  70% {
-    transform: rotate(calc(var(--rotate) * 0.5)) translate(calc(var(--end-x) * 1.2), calc(var(--end-y) * 1.2));
-    opacity: 1;
-    animation-timing-function: ease;
-  }
-
-  85% {
-    transform: rotate(calc(var(--rotate) * 0.66)) translate(calc(var(--end-x)), calc(var(--end-y)));
-    opacity: 1;
-  }
-
-  100% {
-    transform: rotate(calc(var(--rotate) * 1.2)) translate(calc(var(--end-x) * 0.5), calc(var(--end-y) * 0.5));
-    opacity: 0;
-  }
-}
-
-@keyframes point {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
-  }
-
-  25% {
-    transform: scale(calc(var(--scale) * 0.3));
-  }
-
-  38% {
-    opacity: 1;
-  }
-
-  65% {
-    transform: scale(var(--scale));
-    opacity: 1;
-    animation-timing-function: ease;
-  }
-
-  85% {
-    transform: scale(var(--scale));
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(0);
-    opacity: 0;
-  }
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }

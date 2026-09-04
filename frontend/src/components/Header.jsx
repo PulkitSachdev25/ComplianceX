@@ -35,7 +35,7 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
 
   const navItems = [
     {
-      label: "Citizen Mode",
+      label: "Citizen Mode (Nutrition & Claims)",
       href: "#citizen",
       onClick: (e) => {
         if (e) e.preventDefault();
@@ -43,7 +43,7 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
       }
     },
     {
-      label: "Inspector Mode",
+      label: "Inspector Mode (Section 36 Enforcement)",
       href: "#inspector",
       onClick: (e) => {
         if (e) e.preventDefault();
@@ -115,17 +115,11 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
             </div>
           </div>
 
-          {/* Liquid Gooey Navigation Mode Switcher */}
-          <div className="mode-toggle-group-gooey" style={{ display: 'flex', alignItems: 'center' }}>
+          {/* Civic Mode Switcher */}
+          <div style={{ display: 'flex', alignItems: 'center' }}>
             <GooeyNav
               items={navItems}
               initialActiveIndex={currentMode === 'citizen' ? 0 : 1}
-              particleCount={15}
-              particleDistances={[90, 10]}
-              particleR={100}
-              animationTime={600}
-              timeVariance={300}
-              colors={[1, 2, 3, 1, 2, 3, 1, 4]}
             />
           </div>
         </div>
