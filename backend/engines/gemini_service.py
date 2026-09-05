@@ -8,6 +8,11 @@ import json
 import base64
 import logging
 from typing import Dict, Any, List, Optional
+from dotenv import load_dotenv
+
+load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+
 
 logger = logging.getLogger(__name__)
 
