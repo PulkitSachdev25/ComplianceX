@@ -1,8 +1,8 @@
 import React from 'react';
-import { ShieldAlert, CheckCircle, AlertTriangle, Scale, Calculator, DollarSign } from 'lucide-react';
+import { ShieldAlert, CheckCircle, AlertTriangle, Scale, Calculator, DollarSign, RefreshCw } from 'lucide-react';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
-export default function StatutoryAuditCard({ auditData }) {
+export default function StatutoryAuditCard({ auditData, onTargetedRescan, evaluatingRuleId }) {
   if (!auditData) return null;
 
   const {
@@ -69,12 +69,27 @@ export default function StatutoryAuditCard({ auditData }) {
             <Calculator size={16} />
             RULE 5: UNIT SALE PRICE (USP) MATHEMATICAL FRAUD AUDIT
           </div>
-          <span
-            className={`civic-badge ${uspStatus === 'COMPLIANT' ? 'badge-compliant' : 'badge-violation'}`}
-            style={{ fontSize: '0.7rem' }}
-          >
-            {uspStatus}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span
+              className={`civic-badge ${uspStatus === 'COMPLIANT' ? 'badge-compliant' : 'badge-violation'}`}
+              style={{ fontSize: '0.7rem' }}
+            >
+              {uspStatus === 'COMPLIANT' ? '✓ VERIFIED COMPLIANT' : uspStatus}
+            </span>
+            {evaluatingRuleId === 'rule_5_usp' ? (
+              <span style={{ fontSize: '0.75rem', color: '#DD6B20', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: '10px' }}>
+                <RefreshCw size={13} className="animate-spin" /> Auditing close-up...
+              </span>
+            ) : uspStatus !== 'COMPLIANT' && onTargetedRescan && (
+              <button
+                className="civic-btn civic-btn-outline"
+                style={{ marginLeft: '10px', padding: '2px 8px', fontSize: '0.8rem' }}
+                onClick={() => onTargetedRescan('rule_5_usp')}
+              >
+                📸 Re-scan
+              </button>
+            )}
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', fontSize: '0.8rem', marginTop: '0.5rem' }}>
@@ -116,8 +131,8 @@ export default function StatutoryAuditCard({ auditData }) {
               <tr>
                 <th style={{ width: '15%' }}>Mandatory Rule</th>
                 <th style={{ width: '25%' }}>Declaration Requirement</th>
-                <th style={{ width: '40%' }}>Inspected Package Evidence</th>
-                <th style={{ width: '20%' }}>Statutory Status</th>
+                <th style={{ width: '38%' }}>Inspected Package Evidence</th>
+                <th style={{ width: '22%' }}>Statutory Status</th>
               </tr>
             </thead>
             <tbody>
@@ -129,11 +144,26 @@ export default function StatutoryAuditCard({ auditData }) {
                   {mfg?.name ? `${mfg.name}, ${mfg.address || ''} (PIN: ${mfg.pin_code || 'MISSING'})` : 'Omitted / Illegible'}
                 </td>
                 <td>
-                  {mfg?.name && mfg?.pin_code && /^[1-9][0-9]{5}$/.test(mfg.pin_code) ? (
-                    <span className="civic-badge badge-compliant">Compliant</span>
-                  ) : (
-                    <span className="civic-badge badge-violation">Violation (PIN/Addr)</span>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                    {evaluatingRuleId === 'rule_6_1_a' ? (
+                      <span style={{ fontSize: '0.75rem', color: '#DD6B20', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <RefreshCw size={13} className="animate-spin" /> Auditing close-up...
+                      </span>
+                    ) : mfg?.name && mfg?.pin_code && /^[1-9][0-9]{5}$/.test(mfg.pin_code) ? (
+                      <span className="civic-badge badge-compliant">Compliant</span>
+                    ) : (
+                      <>
+                        <span className="civic-badge badge-violation">Violation (PIN/Addr)</span>
+                        <button
+                          className="civic-btn civic-btn-outline"
+                          style={{ marginLeft: '10px', padding: '2px 8px', fontSize: '0.8rem' }}
+                          onClick={() => onTargetedRescan && onTargetedRescan('rule_6_1_a')}
+                        >
+                          📸 Re-scan
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
 
@@ -143,11 +173,26 @@ export default function StatutoryAuditCard({ auditData }) {
                 <td>Generic / Common Commodity Name</td>
                 <td>{commodity_name || 'Not Declared'}</td>
                 <td>
-                  {commodity_name ? (
-                    <span className="civic-badge badge-compliant">Compliant</span>
-                  ) : (
-                    <span className="civic-badge badge-violation">Violation (Omitted)</span>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                    {evaluatingRuleId === 'rule_6_1_b' ? (
+                      <span style={{ fontSize: '0.75rem', color: '#DD6B20', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <RefreshCw size={13} className="animate-spin" /> Auditing close-up...
+                      </span>
+                    ) : commodity_name ? (
+                      <span className="civic-badge badge-compliant">Compliant</span>
+                    ) : (
+                      <>
+                        <span className="civic-badge badge-violation">Violation (Omitted)</span>
+                        <button
+                          className="civic-btn civic-btn-outline"
+                          style={{ marginLeft: '10px', padding: '2px 8px', fontSize: '0.8rem' }}
+                          onClick={() => onTargetedRescan && onTargetedRescan('rule_6_1_b')}
+                        >
+                          📸 Re-scan
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
 
@@ -157,11 +202,26 @@ export default function StatutoryAuditCard({ auditData }) {
                 <td>Net Quantity in Standard SI Units</td>
                 <td>{net_quantity || 'Not Declared'}</td>
                 <td>
-                  {net_quantity ? (
-                    <span className="civic-badge badge-compliant">Compliant</span>
-                  ) : (
-                    <span className="civic-badge badge-violation">Violation</span>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                    {evaluatingRuleId === 'rule_6_1_c' ? (
+                      <span style={{ fontSize: '0.75rem', color: '#DD6B20', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <RefreshCw size={13} className="animate-spin" /> Auditing close-up...
+                      </span>
+                    ) : net_quantity ? (
+                      <span className="civic-badge badge-compliant">Compliant</span>
+                    ) : (
+                      <>
+                        <span className="civic-badge badge-violation">Violation</span>
+                        <button
+                          className="civic-btn civic-btn-outline"
+                          style={{ marginLeft: '10px', padding: '2px 8px', fontSize: '0.8rem' }}
+                          onClick={() => onTargetedRescan && onTargetedRescan('rule_6_1_c')}
+                        >
+                          📸 Re-scan
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
 
@@ -171,11 +231,26 @@ export default function StatutoryAuditCard({ auditData }) {
                 <td>Month & Year of Manufacture/Packing</td>
                 <td>{mfg_date || 'Missing Date'}</td>
                 <td>
-                  {mfg_date ? (
-                    <span className="civic-badge badge-compliant">Compliant</span>
-                  ) : (
-                    <span className="civic-badge badge-violation">Violation</span>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                    {evaluatingRuleId === 'rule_6_1_d' ? (
+                      <span style={{ fontSize: '0.75rem', color: '#DD6B20', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <RefreshCw size={13} className="animate-spin" /> Auditing close-up...
+                      </span>
+                    ) : mfg_date ? (
+                      <span className="civic-badge badge-compliant">Compliant</span>
+                    ) : (
+                      <>
+                        <span className="civic-badge badge-violation">Violation</span>
+                        <button
+                          className="civic-btn civic-btn-outline"
+                          style={{ marginLeft: '10px', padding: '2px 8px', fontSize: '0.8rem' }}
+                          onClick={() => onTargetedRescan && onTargetedRescan('rule_6_1_d')}
+                        >
+                          📸 Re-scan
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
 
@@ -185,11 +260,26 @@ export default function StatutoryAuditCard({ auditData }) {
                 <td>MRP inclusive of all taxes</td>
                 <td>₹{mrp}</td>
                 <td>
-                  {mrp > 0 ? (
-                    <span className="civic-badge badge-compliant">Compliant</span>
-                  ) : (
-                    <span className="civic-badge badge-violation">Violation</span>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                    {evaluatingRuleId === 'rule_6_1_e' ? (
+                      <span style={{ fontSize: '0.75rem', color: '#DD6B20', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <RefreshCw size={13} className="animate-spin" /> Auditing close-up...
+                      </span>
+                    ) : mrp > 0 ? (
+                      <span className="civic-badge badge-compliant">Compliant</span>
+                    ) : (
+                      <>
+                        <span className="civic-badge badge-violation">Violation</span>
+                        <button
+                          className="civic-btn civic-btn-outline"
+                          style={{ marginLeft: '10px', padding: '2px 8px', fontSize: '0.8rem' }}
+                          onClick={() => onTargetedRescan && onTargetedRescan('rule_6_1_e')}
+                        >
+                          📸 Re-scan
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
 
@@ -203,11 +293,26 @@ export default function StatutoryAuditCard({ auditData }) {
                     : 'Missing Grievance Details'}
                 </td>
                 <td>
-                  {auditData.consumer_care?.phone && auditData.consumer_care?.email ? (
-                    <span className="civic-badge badge-compliant">Compliant</span>
-                  ) : (
-                    <span className="civic-badge badge-violation">Violation (Care Cell)</span>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '4px' }}>
+                    {evaluatingRuleId === 'rule_6_1_f' ? (
+                      <span style={{ fontSize: '0.75rem', color: '#DD6B20', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <RefreshCw size={13} className="animate-spin" /> Auditing close-up...
+                      </span>
+                    ) : auditData.consumer_care?.phone && auditData.consumer_care?.email ? (
+                      <span className="civic-badge badge-compliant">Compliant</span>
+                    ) : (
+                      <>
+                        <span className="civic-badge badge-violation">Violation (Care Cell)</span>
+                        <button
+                          className="civic-btn civic-btn-outline"
+                          style={{ marginLeft: '10px', padding: '2px 8px', fontSize: '0.8rem' }}
+                          onClick={() => onTargetedRescan && onTargetedRescan('rule_6_1_f')}
+                        >
+                          📸 Re-scan
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             </tbody>

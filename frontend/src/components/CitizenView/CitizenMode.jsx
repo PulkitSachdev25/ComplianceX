@@ -15,25 +15,25 @@ export default function CitizenMode({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Products state array (up to 3 items)
+  // Products state array (up to 3 items) initialized clean with no pre-loaded sample reports
   const [productsData, setProductsData] = useState([
     {
       product_id: 'prod_1',
-      preset_key: 'zero_sugar_juice',
+      preset_key: null,
       front_image_b64: null,
       back_image_b64: null,
       manual_data: null
     },
     {
       product_id: 'prod_2',
-      preset_key: 'atta_cookies',
+      preset_key: null,
       front_image_b64: null,
       back_image_b64: null,
       manual_data: null
     },
     {
       product_id: 'prod_3',
-      preset_key: 'protein_bar',
+      preset_key: null,
       front_image_b64: null,
       back_image_b64: null,
       manual_data: null
@@ -111,11 +111,6 @@ export default function CitizenMode({
       setLoading(false);
     }
   };
-
-  // Auto-run initial analysis on first load
-  useEffect(() => {
-    runAnalysis();
-  }, [productCount]);
 
   return (
     <div className="civic-container">

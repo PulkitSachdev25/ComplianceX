@@ -1,21 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, FileText, Download, RefreshCw, AlertCircle, CheckCircle2, Save, MapPin } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Shield, FileText, Download, RefreshCw, AlertCircle, CheckCircle2, Save, MapPin, Database } from 'lucide-react';
 import CameraRig from './CameraRig';
 import StatutoryAuditCard from './StatutoryAuditCard';
 import ChainOfCustodyLedger from './ChainOfCustodyLedger';
 import OfflineQueueModal from './OfflineQueueModal';
+import TargetedRescanModal from './TargetedRescanModal';
 import { offlineStorage } from '../../utils/offlineStorage';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function InspectorMode({ 
   apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://compliancex.onrender.com' 
 }) {
-  const [presets, setPresets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pdfGenerating, setPdfGenerating] = useState(false);
   const [error, setError] = useState(null);
   const [offlineModalOpen, setOfflineModalOpen] = useState(false);
-  const [offlineNotice, setOfflineNotice] = useState(null);
+  const [rescanModalOpen, setRescanModalOpen] = useState(false);
+  const [rescanRuleId, setRescanRuleId] = useState(null);
+  const [evaluatingRuleId, setEvaluatingRuleId] = useState(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [pendingQueueCount, setPendingQueueCount] = useState(() => offlineStorage.getQueue().length);
 
   // Inspector Officer & Geolocation State
   const [inspectorId, setInspectorId] = useState('LM-INSP-DEL-4091');
@@ -24,6 +28,36 @@ export default function InspectorMode({
     longitude: 77.2090,
     display_name: 'Krishi Bhawan, Department of Consumer Affairs, New Delhi, India'
   });
+
+  // Helper to refresh offline queue count
+  const refreshQueueCount = useCallback(() => {
+    const q = offlineStorage.getQueue();
+    setPendingQueueCount(q.length);
+  }, []);
+
+  // Reactive Network & Storage Event Listeners
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      refreshQueueCount();
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      refreshQueueCount();
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    refreshQueueCount();
+    const interval = setInterval(refreshQueueCount, 2500);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(interval);
+    };
+  }, [refreshQueueCount]);
 
   // 4 Panels & Hashes State
   const [panels, setPanels] = useState({
@@ -38,20 +72,12 @@ export default function InspectorMode({
     top: null,
     bottom: null
   });
-  const [selectedPresetKey, setSelectedPresetKey] = useState('fraudulent_pricing_chips');
 
   // Audit Output State
   const [auditResult, setAuditResult] = useState(null);
 
-  // Fetch presets & initialize Geolocation
+  // Initialize Geolocation
   useEffect(() => {
-    fetch(`${apiBaseUrl}/api/presets/inspector`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.presets) setPresets(data.presets);
-      })
-      .catch((err) => console.error('Presets load error:', err));
-
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
@@ -82,35 +108,90 @@ export default function InspectorMode({
   const handlePanelUpdate = (panelName, dataUrl, hash) => {
     setPanels((prev) => ({ ...prev, [panelName]: dataUrl }));
     setPanelHashes((prev) => ({ ...prev, [panelName]: hash }));
-    setSelectedPresetKey(null);
   };
 
-  // Apply Preset Legal Metrology Case
-  const handleApplyPreset = (presetKey) => {
-    setSelectedPresetKey(presetKey);
-    const p = presets.find((item) => item.key === presetKey);
-    if (p) {
-      setPanels({ front: null, back: null, top: null, bottom: null });
-      setPanelHashes({
-        front: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-        back: 'ca978112ca1bbdcafac231b39a23dc4da7860819c1966ec0725a1144ed30185e',
-        top: '8a32a67e0e7a2b25867de23e590494481079d479e0f3169e9a4f6d480da0f279',
-        bottom: 'cb5a8e03bc21bb7740b0ccbe479339e03d4ccbb1d5462cfb37b4f53535970c79'
+  // Handle human-in-the-loop targeted re-scan request for violated/missing rules
+  const handleTargetedRescan = (ruleId) => {
+    setRescanRuleId(ruleId);
+    setRescanModalOpen(true);
+  };
+
+  const handleSaveTargetedCapture = async (panelName, dataUrl, hash, ruleId) => {
+    handlePanelUpdate(panelName, dataUrl, hash);
+    setRescanModalOpen(false);
+    const targetRule = ruleId || rescanRuleId;
+    setRescanRuleId(null);
+
+    if (!targetRule) return;
+
+    setEvaluatingRuleId(targetRule);
+    try {
+      const payload = {
+        rule_id: targetRule,
+        image_base64: dataUrl,
+        current_context: auditResult || {}
+      };
+
+      const res = await fetch(`${apiBaseUrl}/api/inspector/re-evaluate-field`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
+
+      if (!res.ok) {
+        throw new Error(`Micro-audit failed: ${res.status}`);
+      }
+
+      const data = await res.json();
+      if (data.updated_audit) {
+        setAuditResult(data.updated_audit);
+      }
+    } catch (err) {
+      console.error('Targeted re-evaluation error:', err);
+    } finally {
+      setEvaluatingRuleId(null);
     }
   };
 
   // Execute Legal Metrology Statutory Audit
-  const runAudit = async () => {
+  const handleExecuteAudit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+
+    // 1. Strict 4-Panel Validation
+    if (!panels || !panels.front || !panels.back || !panels.top || !panels.bottom) {
+      alert("Please capture all 4 evidentiary panels (Front, Back, Top, Bottom) before executing the audit.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    setOfflineNotice(null);
+
+    // 2. Clean Payload Construction (Strictly strings/numbers, NO DOM elements)
+    const userLocation = geolocation ? {
+      formatted_address: geolocation.display_name || geolocation.formatted_address || "Okhla Industrial Area, Phase III, New Delhi, Delhi 110020",
+      lat: geolocation.latitude || 28.7095,
+      lng: geolocation.longitude || 77.1565
+    } : {
+      formatted_address: "Okhla Industrial Area, Phase III, New Delhi, Delhi 110020",
+      lat: 28.7095,
+      lng: 77.1565
+    };
 
     const payload = {
-      preset_key: selectedPresetKey,
-      panels: panels,
-      panel_hashes: panelHashes,
-      geolocation: geolocation,
+      panels: {
+        front: panels.front,
+        back: panels.back,
+        top: panels.top,
+        bottom: panels.bottom
+      },
+      panel_hashes: {
+        front: panelHashes.front || null,
+        back: panelHashes.back || null,
+        top: panelHashes.top || null,
+        bottom: panelHashes.bottom || null
+      },
+      location: userLocation,
+      geolocation: userLocation,
       inspector_id: inspectorId
     };
 
@@ -127,30 +208,37 @@ export default function InspectorMode({
 
       const data = await res.json();
       setAuditResult(data);
+      setTimeout(() => {
+        const matrixEl = document.getElementById('statutory-audit-findings');
+        if (matrixEl) {
+          matrixEl.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     } catch (err) {
-      console.warn('Live audit failed. Activating Offline Queue Cache:', err);
-      // Offline fallback: cache raw audit request
-      const fallbackDocket = {
-        docket_id: `GOI-LM-OFFLINE-${Date.now()}`,
-        timestamp_utc: new Date().toISOString(),
-        inspector_id: inspectorId,
-        commodity_name: 'Queued Offline Commodity Inspection',
-        is_compliant: false,
-        violations_count: 1,
-        geolocation: geolocation,
-        panel_hashes: panelHashes
-      };
-      offlineStorage.enqueue(fallbackDocket);
-      setOfflineNotice('Connection unavailable in warehouse. Inspection frames & metadata cached locally in offline queue.');
+      if (!navigator.onLine || err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+        console.warn('Network offline. Activating Offline Queue Cache:', err);
+        // Offline fallback: cache raw audit request
+        const fallbackDocket = {
+          docket_id: `GOI-LM-OFFLINE-${Date.now()}`,
+          timestamp_utc: new Date().toISOString(),
+          inspector_id: inspectorId,
+          commodity_name: 'Queued Offline Commodity Inspection',
+          is_compliant: false,
+          violations_count: 1,
+          geolocation: userLocation,
+          panel_hashes: panelHashes
+        };
+        offlineStorage.enqueue(fallbackDocket);
+        refreshQueueCount();
+      } else {
+        // Handle standard API errors (500s, 400s) without caching
+        console.error("API Error:", err);
+        setError("Audit failed: " + err.message);
+      }
     } finally {
       setLoading(false);
     }
   };
-
-  // Auto-run initial audit on mount
-  useEffect(() => {
-    runAudit();
-  }, [selectedPresetKey]);
 
   // Generate & Download Section 36(1) Legal Docket PDF
   const downloadSection36Docket = async () => {
@@ -158,10 +246,22 @@ export default function InspectorMode({
     setPdfGenerating(true);
 
     try {
+      const pdfPayload = {
+        ...auditResult,
+        formatted_address: geolocation?.display_name || geolocation?.formatted_address || geolocation?.address || "Krishi Bhawan, Department of Consumer Affairs, New Delhi, India",
+        location_name: geolocation?.display_name || geolocation?.formatted_address || geolocation?.address || "Krishi Bhawan, Department of Consumer Affairs, New Delhi, India",
+        latitude: geolocation?.latitude || geolocation?.lat,
+        longitude: geolocation?.longitude || geolocation?.lng,
+        geolocation: {
+          ...geolocation,
+          display_name: geolocation?.display_name || "Krishi Bhawan, Department of Consumer Affairs, New Delhi, India"
+        }
+      };
+
       const res = await fetch(`${apiBaseUrl}/api/inspector/generate-docket-pdf`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(auditResult)
+        body: JSON.stringify(pdfPayload)
       });
 
       if (!res.ok) {
@@ -215,15 +315,48 @@ export default function InspectorMode({
             style={{ fontSize: '0.75rem', padding: '0.4rem 0.75rem' }}
             onClick={() => setOfflineModalOpen(true)}
           >
-            Offline Queue Cache
+            Offline Queue Cache {pendingQueueCount > 0 && `(${pendingQueueCount})`}
           </button>
         </div>
       </div>
 
-      {offlineNotice && (
-        <div style={{ backgroundColor: '#FFFAF0', border: '1px solid #FBD38D', padding: '0.75rem 1rem', borderRadius: '2px', color: '#DD6B20', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <AlertCircle size={18} />
-          <span>{offlineNotice}</span>
+      {/* Reactive Network & Offline Queue Banner: Render ONLY IF offline or items in queue */}
+      {(!isOnline || pendingQueueCount > 0) && (
+        <div
+          style={{
+            backgroundColor: '#FFFAF0',
+            border: '1px solid #FBD38D',
+            padding: '0.75rem 1rem',
+            borderRadius: '2px',
+            color: '#DD6B20',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.75rem',
+            flexWrap: 'wrap'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertCircle size={18} />
+            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+              {!isOnline
+                ? 'Connection unavailable in warehouse. Inspection frames & metadata cached locally in offline queue.'
+                : `Online. ${pendingQueueCount} cached inspection${pendingQueueCount === 1 ? '' : 's'} pending sync.`}
+            </span>
+          </div>
+          <button
+            className="civic-btn civic-btn-primary"
+            style={{
+              fontSize: '0.75rem',
+              padding: '0.35rem 0.85rem',
+              backgroundColor: '#DD6B20',
+              borderColor: '#C05621'
+            }}
+            onClick={() => setOfflineModalOpen(true)}
+          >
+            <Database size={13} /> {isOnline ? 'Sync Offline Queue' : 'View Offline Queue'}
+          </button>
         </div>
       )}
 
@@ -238,8 +371,6 @@ export default function InspectorMode({
         panels={panels}
         panelHashes={panelHashes}
         onPanelUpdate={handlePanelUpdate}
-        presets={presets}
-        onApplyPreset={handleApplyPreset}
         disabled={loading}
       />
 
@@ -248,7 +379,7 @@ export default function InspectorMode({
         <button
           className="civic-btn civic-btn-primary"
           style={{ padding: '0.75rem 2rem', fontSize: '0.95rem' }}
-          onClick={runAudit}
+          onClick={handleExecuteAudit}
           disabled={loading}
           id="btn-run-inspector-audit"
         >
@@ -290,16 +421,34 @@ export default function InspectorMode({
 
       {/* Audit Findings & Chain of Custody Displays */}
       {auditResult && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '1.25rem', marginTop: '1.5rem' }}>
-          <StatutoryAuditCard auditData={auditResult} />
+        <div id="statutory-audit-findings" style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '1.25rem', marginTop: '1.5rem' }}>
+          <StatutoryAuditCard
+            auditData={auditResult}
+            onTargetedRescan={handleTargetedRescan}
+            evaluatingRuleId={evaluatingRuleId}
+          />
           <ChainOfCustodyLedger auditData={auditResult} geolocation={geolocation} />
         </div>
       )}
 
+      {/* 1-Shot Human-in-the-Loop Targeted Re-Scan Modal */}
+      <TargetedRescanModal
+        isOpen={rescanModalOpen}
+        ruleId={rescanRuleId}
+        onClose={() => {
+          setRescanModalOpen(false);
+          setRescanRuleId(null);
+        }}
+        onSaveCapture={handleSaveTargetedCapture}
+      />
+
       {/* Offline Queue Modal */}
       <OfflineQueueModal
         isOpen={offlineModalOpen}
-        onClose={() => setOfflineModalOpen(false)}
+        onClose={() => {
+          setOfflineModalOpen(false);
+          refreshQueueCount();
+        }}
         apiBaseUrl={apiBaseUrl}
       />
     </div>

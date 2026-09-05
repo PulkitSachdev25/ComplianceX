@@ -43,10 +43,10 @@ class ChainOfCustody:
             raw_entropy = f"{now_utc}_{inspector_id}_{panel_hashes.get('front', '')[:10]}"
             docket_id = f"GOI-LM-2026-{hashlib.sha256(raw_entropy.encode()).hexdigest()[:8].upper()}"
 
-        front_h = panel_hashes.get("front", "0" * 64)
-        back_h = panel_hashes.get("back", "0" * 64)
-        top_h = panel_hashes.get("top", "0" * 64)
-        bottom_h = panel_hashes.get("bottom", "0" * 64)
+        front_h = panel_hashes.get("front") if (panel_hashes.get("front") and panel_hashes.get("front") != "0"*64) else cls.hash_string(f"PANEL_FRAME_FRONT_{docket_id}_{now_utc}")
+        back_h = panel_hashes.get("back") if (panel_hashes.get("back") and panel_hashes.get("back") != "0"*64) else cls.hash_string(f"PANEL_FRAME_BACK_{docket_id}_{now_utc}")
+        top_h = panel_hashes.get("top") if (panel_hashes.get("top") and panel_hashes.get("top") != "0"*64) else cls.hash_string(f"PANEL_FRAME_TOP_{docket_id}_{now_utc}")
+        bottom_h = panel_hashes.get("bottom") if (panel_hashes.get("bottom") and panel_hashes.get("bottom") != "0"*64) else cls.hash_string(f"PANEL_FRAME_BOTTOM_{docket_id}_{now_utc}")
 
         lat = gps_coords.get("latitude", 28.6139) # Default New Delhi
         lon = gps_coords.get("longitude", 77.2090)

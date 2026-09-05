@@ -7,7 +7,7 @@ import AnimatedList from './AnimatedList';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function App() {
-  const [currentMode, setCurrentMode] = useState('citizen'); // default to citizen or inspector
+  const [currentMode, setCurrentMode] = useState('inspector'); // default to inspector
   const [offlineModalOpen, setOfflineModalOpen] = useState(false);
 
   const complianceRules = [

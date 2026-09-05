@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Camera, Upload, CheckCircle, AlertCircle, RefreshCw, Sparkles, ChevronDown } from 'lucide-react';
+import { Camera, Upload, CheckCircle, AlertCircle, RefreshCw, Sparkles, ChevronDown, Video } from 'lucide-react';
+import CitizenCameraModal from './CitizenCameraModal';
 
 export default function ProductUploadCard({
   slotIndex,
@@ -12,6 +13,8 @@ export default function ProductUploadCard({
   const frontInputRef = useRef(null);
   const backInputRef = useRef(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [cameraModalOpen, setCameraModalOpen] = useState(false);
+  const [initialCameraPanel, setInitialCameraPanel] = useState('front');
 
   const handleFileChange = (e, field) => {
     const file = e.target.files?.[0];
@@ -22,6 +25,20 @@ export default function ProductUploadCard({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCameraCapture = (panelKey, dataUrl) => {
+    const field = panelKey === 'front' ? 'front_image_b64' : 'back_image_b64';
+    onChange({
+      ...productData,
+      [field]: dataUrl,
+      preset_key: null
+    });
+  };
+
+  const openCamera = (panel = 'front') => {
+    setInitialCameraPanel(panel);
+    setCameraModalOpen(true);
   };
 
   return (
@@ -68,11 +85,30 @@ export default function ProductUploadCard({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.85rem' }}>
         {/* Front Panel (Marketing Claims) */}
         <div>
-          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#1A365D', marginBottom: '0.25rem' }}>
-            Front of Pack (Claims)
-          </label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#1A365D' }}>
+              Front of Pack (Claims)
+            </label>
+            <button
+              type="button"
+              onClick={() => openCamera('front')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#2B6CB0',
+                fontSize: '0.68rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.2rem',
+                fontWeight: 600
+              }}
+            >
+              <Camera size={11} /> Live Camera
+            </button>
+          </div>
           <div
-            onClick={() => frontInputRef.current?.click()}
+            onClick={() => openCamera('front')}
             style={{
               border: '2px dashed var(--border-medium)',
               backgroundColor: '#FAFAFA',
@@ -97,7 +133,7 @@ export default function ProductUploadCard({
               <>
                 <Camera size={20} color="#718096" />
                 <span style={{ fontSize: '0.7rem', color: '#718096', marginTop: '0.25rem' }}>
-                  Capture / Upload Front
+                  Live Camera / Upload Front
                 </span>
               </>
             )}
@@ -109,15 +145,45 @@ export default function ProductUploadCard({
               onChange={(e) => handleFileChange(e, 'front_image_b64')}
             />
           </div>
+          <button
+            type="button"
+            className="civic-btn civic-btn-outline"
+            style={{ width: '100%', marginTop: '0.35rem', padding: '0.2rem 0.4rem', fontSize: '0.68rem' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              frontInputRef.current?.click();
+            }}
+          >
+            <Upload size={11} /> Upload File
+          </button>
         </div>
 
         {/* Back Panel (Nutrition & Ingredients) */}
         <div>
-          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#1A365D', marginBottom: '0.25rem' }}>
-            Back of Pack (Nutrition / Ing.)
-          </label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+            <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#1A365D' }}>
+              Back of Pack (Nutrition / Ing.)
+            </label>
+            <button
+              type="button"
+              onClick={() => openCamera('back')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#2B6CB0',
+                fontSize: '0.68rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.2rem',
+                fontWeight: 600
+              }}
+            >
+              <Camera size={11} /> Live Camera
+            </button>
+          </div>
           <div
-            onClick={() => backInputRef.current?.click()}
+            onClick={() => openCamera('back')}
             style={{
               border: '2px dashed var(--border-medium)',
               backgroundColor: '#FAFAFA',
@@ -142,7 +208,7 @@ export default function ProductUploadCard({
               <>
                 <Upload size={20} color="#718096" />
                 <span style={{ fontSize: '0.7rem', color: '#718096', marginTop: '0.25rem' }}>
-                  Capture / Upload Back
+                  Live Camera / Upload Back
                 </span>
               </>
             )}
@@ -154,6 +220,17 @@ export default function ProductUploadCard({
               onChange={(e) => handleFileChange(e, 'back_image_b64')}
             />
           </div>
+          <button
+            type="button"
+            className="civic-btn civic-btn-outline"
+            style={{ width: '100%', marginTop: '0.35rem', padding: '0.2rem 0.4rem', fontSize: '0.68rem' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              backInputRef.current?.click();
+            }}
+          >
+            <Upload size={11} /> Upload File
+          </button>
         </div>
       </div>
 
@@ -236,6 +313,16 @@ export default function ProductUploadCard({
           </div>
         )}
       </div>
+
+      {/* Citizen 2-Panel Live Camera Rig Modal */}
+      <CitizenCameraModal
+        isOpen={cameraModalOpen}
+        onClose={() => setCameraModalOpen(false)}
+        slotIndex={slotIndex}
+        productData={productData}
+        onSaveCaptures={handleCameraCapture}
+        initialPanel={initialCameraPanel}
+      />
     </div>
   );
 }

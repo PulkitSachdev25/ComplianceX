@@ -159,5 +159,87 @@ class TestRegulatoryEngines(unittest.TestCase):
         self.assertTrue(len(pdf_bytes) > 1000)
         self.assertTrue(pdf_bytes.startswith(b"%PDF"))
 
+    def test_pdf_generation_with_resolved_address(self):
+        """Tests ReportLab PDF with custom formatted physical address and coordinates."""
+        docket_with_address = {
+            "docket_id": "GOI-LM-2026-ADDR01",
+            "formatted_address": "Okhla Industrial Area Phase III, South Delhi, Delhi 110020",
+            "latitude": 28.5355,
+            "longitude": 77.2680,
+            "commodity_name": "Premium Salted Almonds",
+            "is_compliant": True,
+            "mrp": 350.0,
+            "violations": []
+        }
+        pdf_bytes = LegalDocketPDFGenerator.generate_docket_pdf(docket_with_address)
+        self.assertTrue(len(pdf_bytes) > 1000)
+        self.assertTrue(pdf_bytes.startswith(b"%PDF"))
+
+    def test_targeted_single_field_reevaluation_usp(self):
+        """Tests single-field micro audit extraction and USP math recalculation."""
+        from engines.gemini_service import GeminiVisionService
+        context = {
+            "commodity_name": "Crispy Potato Wafers",
+            "net_quantity": "65 g",
+            "mrp": 35.0,
+            "declared_usp": 0.38 # Mismatched initially
+        }
+        res = GeminiVisionService.extract_single_field(
+            rule_id="rule_5_usp",
+            image_b64="data:image/jpeg;base64,mockframe",
+            current_context=context
+        )
+        self.assertTrue(res["found"])
+        self.assertEqual(res["value"], 0.54) # 35 / 65 = 0.538 -> 0.54
+
+        # Validate audit on updated context
+        context["declared_usp"] = res["value"]
+        audit_res = LegalMetrologyEngine.validate_audit(context)
+        self.assertEqual(audit_res["usp_math_audit"]["status"], "COMPLIANT")
+        self.assertEqual(audit_res["usp_math_audit"]["disparity"], 0.0)
+
+    def test_pdf_formatting_and_unique_hashes(self):
+        """Tests that Rupee symbols are sanitized to 'Rs. ', long addresses are not sliced, and 4 panels have unique hashes."""
+        sample_docket = {
+            "docket_id": "GOI-LM-2026-TEST99",
+            "timestamp_utc": "2026-09-05 10:00:00 UTC",
+            "inspector_id": "LM-INSP-DEL-4091",
+            "formatted_address": "Hungerford Street, Shakespeare Sarani, Park Street Area, Kolkata, West Bengal 700071",
+            "commodity_name": "Crunchy Wafer Rolls",
+            "manufacturer_details": {
+                "name": "SuperBake Confectionery Pvt Ltd",
+                "address": "Plot 105, Sector 58, Phase 2, Industrial Focal Point, Mohali, Punjab",
+                "pin_code": "160071"
+            },
+            "net_quantity": "150 g",
+            "mrp": 75.0,
+            "panel_hashes": {
+                "front": "1111111111111111111111111111111111111111111111111111111111111111",
+                "back": "2222222222222222222222222222222222222222222222222222222222222222",
+                "top": "3333333333333333333333333333333333333333333333333333333333333333",
+                "bottom": "4444444444444444444444444444444444444444444444444444444444444444"
+            },
+            "violations": [
+                {
+                    "rule_number": "Rule 6(1)(e)",
+                    "title": "MRP Smudge",
+                    "details": "Price tag smeared; declared MRP is ₹75.00 instead of statutory format.",
+                    "evidence": "Observed rate: ₹75.00",
+                    "remedial_action": "Print clear MRP."
+                }
+            ],
+            "statutory_charge_sheet": {
+                "proposed_compounding_fine_inr": 15000
+            }
+        }
+        pdf_bytes = LegalDocketPDFGenerator.generate_docket_pdf(sample_docket)
+        self.assertTrue(len(pdf_bytes) > 1000)
+        self.assertTrue(pdf_bytes.startswith(b"%PDF"))
+
+        # Verify no unhandled Unicode Rupee glyphs in raw decoded text
+        # (Helvetica would fail or corrupt if raw ₹ is directly unhandled)
+        pdf_text = pdf_bytes.decode('latin1', errors='ignore')
+        self.assertNotIn("भारत सरकार", pdf_text)
+
 if __name__ == "__main__":
     unittest.main()

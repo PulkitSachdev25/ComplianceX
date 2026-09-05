@@ -56,14 +56,20 @@ class CitizenAnalyzeRequest(BaseModel):
 
 class InspectorAuditRequest(BaseModel):
     preset_key: Optional[str] = None
-    panels: Optional[Dict[str, str]] = None # {"front": b64, "back": b64, "top": b64, "bottom": b64}
+    panels: Optional[Dict[str, Any]] = None # {"front": b64, "back": b64, "top": b64, "bottom": b64}
     panel_hashes: Optional[Dict[str, str]] = None
     geolocation: Optional[Dict[str, Any]] = None
+    location: Optional[Dict[str, Any]] = None
     inspector_id: Optional[str] = "LM-INSP-DEL-4091"
     manual_data: Optional[Dict[str, Any]] = None
 
 class OfflineSyncBatch(BaseModel):
     queue: List[Dict[str, Any]]
+
+class TargetedRescanRequest(BaseModel):
+    rule_id: str
+    image_base64: str
+    current_context: Optional[Dict[str, Any]] = None
 
 # -------------------------------------------------------------
 # Endpoints
@@ -192,6 +198,41 @@ def analyze_citizen_products(payload: CitizenAnalyzeRequest):
         "comparison": comparison
     }
 
+def generate_rule_checklist(validation_res: Dict[str, Any], audit_data: Dict[str, Any]) -> Dict[str, Any]:
+    violations_map = {v.get("rule_number"): v for v in validation_res.get("violations", [])}
+    usp_audit = validation_res.get("usp_math_audit", {})
+    
+    return {
+        "rule_6_1_a": {
+            "status": "VIOLATED" if any("6(1)(a)" in str(k) for k in violations_map) else "COMPLIANT",
+            "desc": violations_map.get("Rule 6(1)(a)", {}).get("details", "Manufacturer name, address & PIN")
+        },
+        "rule_6_1_b": {
+            "status": "VIOLATED" if any("6(1)(b)" in str(k) for k in violations_map) else "COMPLIANT",
+            "desc": violations_map.get("Rule 6(1)(b)", {}).get("details", "Generic commodity name declared")
+        },
+        "rule_6_1_c": {
+            "status": "VIOLATED" if any("6(1)(c)" in str(k) for k in violations_map) else "COMPLIANT",
+            "desc": violations_map.get("Rule 6(1)(c)", {}).get("details", f"Standard SI unit declared ({audit_data.get('net_quantity', 'N/A')})")
+        },
+        "rule_6_1_d": {
+            "status": "VIOLATED" if any("6(1)(d)" in str(k) for k in violations_map) else "COMPLIANT",
+            "desc": violations_map.get("Rule 6(1)(d)", {}).get("details", "Month & Year of packing declared")
+        },
+        "rule_6_1_e": {
+            "status": "VIOLATED" if any("6(1)(e)" in str(k) for k in violations_map) else "COMPLIANT",
+            "desc": violations_map.get("Rule 6(1)(e)", {}).get("details", "MRP format compliant")
+        },
+        "rule_5_usp": {
+            "status": "COMPLIANT" if usp_audit.get("status") == "COMPLIANT" else "VIOLATED",
+            "desc": f"Calculated statutory USP ({usp_audit.get('display_str') or usp_audit.get('calculated_usp')}) vs printed USP ({usp_audit.get('declared_usp')})"
+        },
+        "rule_6_1_n": {
+            "status": "VIOLATED" if any("6(1)(n)" in str(k) for k in violations_map) else "COMPLIANT",
+            "desc": violations_map.get("Rule 6(1)(n)", {}).get("details", "Consumer Care contact complete")
+        }
+    }
+
 @app.post("/api/inspector/audit")
 def audit_legal_metrology(payload: InspectorAuditRequest):
     """
@@ -221,10 +262,21 @@ def audit_legal_metrology(payload: InspectorAuditRequest):
                 panel_hashes[panel_name] = ChainOfCustody.hash_string(f"PANEL_RAW_FRAME_{panel_name.upper()}_{payload.preset_key or 'CUSTOM'}")
 
     # 4. Generate Master Chain of Custody ledger
-    geo = payload.geolocation or {
-        "latitude": 28.6139,
-        "longitude": 77.2090,
-        "display_name": "Department of Consumer Affairs, Krishi Bhawan, New Delhi"
+    geo_input = payload.location or payload.geolocation or {
+        "latitude": 28.7095,
+        "longitude": 77.1565,
+        "display_name": "Okhla Industrial Area, Phase III, New Delhi, Delhi 110020"
+    }
+
+    lat = geo_input.get("lat") or geo_input.get("latitude") or 28.7095
+    lng = geo_input.get("lng") or geo_input.get("longitude") or 77.1565
+    formatted_addr = geo_input.get("formatted_address") or geo_input.get("display_name") or "Okhla Industrial Area, Phase III, New Delhi, Delhi 110020"
+
+    geo = {
+        "latitude": lat,
+        "longitude": lng,
+        "display_name": formatted_addr,
+        "formatted_address": formatted_addr
     }
 
     coc = ChainOfCustody.generate_chain_of_custody(
@@ -233,14 +285,112 @@ def audit_legal_metrology(payload: InspectorAuditRequest):
         inspector_id=payload.inspector_id or "LM-INSP-DEL-4091"
     )
 
+    checklist = generate_rule_checklist(validation_res, audit_data)
+    usp_audit = validation_res.get("usp_math_audit", {})
+
     # Merge into complete audit docket object
     docket = {
         **validation_res,
         **audit_data,
-        **coc
+        **coc,
+        "product_name": audit_data.get("commodity_name"),
+        "mfg_expiry_dates": audit_data.get("mfg_date"),
+        "statutory_calculated_usp": usp_audit.get("display_str") or (f"Rs. {usp_audit.get('calculated_usp')} {usp_audit.get('statutory_unit', '')}" if usp_audit.get('calculated_usp') else "N/A"),
+        "usp_disparity_status": usp_audit.get("status"),
+        "missing_mandatory_fields": [v["rule_number"] for v in validation_res.get("violations", []) if v.get("category") == "OMISSION_ERROR"],
+        "rule_checklist": checklist,
+        "formatted_address": formatted_addr,
+        "location_name": formatted_addr
     }
 
     return docket
+
+@app.post("/api/inspector/re-evaluate-field")
+def re_evaluate_single_field(payload: TargetedRescanRequest):
+    """
+    Evaluates a single close-up image specifically for one missing or violated field.
+    Executes lightweight single-field extraction and re-runs LegalMetrology validation on updated context.
+    """
+    rule_id = payload.rule_id
+    image_b64 = payload.image_base64
+    ctx = dict(payload.current_context or {})
+
+    # 1. Extract single targeted field
+    res = GeminiVisionService.extract_single_field(
+        rule_id=rule_id,
+        image_b64=image_b64,
+        current_context=ctx
+    )
+
+    clean_rule = rule_id.lower().replace("-", "_")
+    field_found = res.get("found", False)
+    extracted_val = res.get("value")
+
+    if not field_found or extracted_val is None:
+        return {
+            "status": "OMITTED",
+            "is_compliant": False,
+            "rule_id": rule_id,
+            "message": "Still not detected in close-up frame. Please ensure proper focus and illumination.",
+            "updated_audit": ctx
+        }
+
+    # 2. Patch current context with newly extracted value
+    if "usp" in clean_rule:
+        try:
+            ctx["declared_usp"] = float(extracted_val)
+        except (ValueError, TypeError):
+            ctx["declared_usp"] = extracted_val
+    elif "6_1_a" in clean_rule or "manufacturer" in clean_rule or "pin" in clean_rule:
+        if isinstance(extracted_val, dict):
+            ctx["manufacturer_details"] = extracted_val
+        else:
+            ctx.setdefault("manufacturer_details", {})["name"] = str(extracted_val)
+    elif "6_1_b" in clean_rule or "commodity" in clean_rule:
+        ctx["commodity_name"] = str(extracted_val)
+    elif "6_1_c" in clean_rule or "quantity" in clean_rule:
+        ctx["net_quantity"] = str(extracted_val)
+    elif "6_1_d" in clean_rule or "mfg_date" in clean_rule or "date" in clean_rule:
+        ctx["mfg_date"] = str(extracted_val)
+    elif "6_1_e" in clean_rule or "mrp" in clean_rule or "price" in clean_rule:
+        try:
+            ctx["mrp"] = float(extracted_val)
+        except (ValueError, TypeError):
+            ctx["mrp"] = extracted_val
+    elif "6_1_f" in clean_rule or "consumer_care" in clean_rule or "care" in clean_rule:
+        if isinstance(extracted_val, dict):
+            ctx["consumer_care"] = extracted_val
+        else:
+            ctx.setdefault("consumer_care", {})["phone"] = str(extracted_val)
+
+    # 3. Re-run LegalMetrologyEngine validation on patched context
+    validation_res = LegalMetrologyEngine.validate_audit(ctx)
+
+    # 4. Check if target rule is now compliant
+    is_rule_compliant = True
+    if "usp" in clean_rule:
+        is_rule_compliant = validation_res.get("usp_math_audit", {}).get("status") == "COMPLIANT"
+    else:
+        for viol in validation_res.get("violations", []):
+            r_num = viol.get("rule_number", "").lower().replace("(", "_").replace(")", "_")
+            if clean_rule in r_num or r_num in clean_rule:
+                is_rule_compliant = False
+                break
+
+    # Build updated complete docket object preserving CoC and Geolocation
+    updated_docket = {
+        **ctx,
+        **validation_res
+    }
+
+    return {
+        "status": "COMPLIANT" if is_rule_compliant else "FOUND",
+        "is_compliant": is_rule_compliant,
+        "rule_id": rule_id,
+        "extracted_value": extracted_val,
+        "message": f"Successfully re-evaluated {rule_id}.",
+        "updated_audit": updated_docket
+    }
 
 @app.post("/api/inspector/generate-docket-pdf")
 def generate_docket_pdf(docket_data: Dict[str, Any]):
@@ -248,6 +398,16 @@ def generate_docket_pdf(docket_data: Dict[str, Any]):
     Generates downloadable Section 36(1) Statutory Inspection Report & Compounding Docket PDF.
     """
     try:
+        # Ingest location_name, formatted_address, premises_address, or geo structure
+        geo = docket_data.get("geolocation") or docket_data.get("geo") or {}
+        if isinstance(geo, dict):
+            if not docket_data.get("formatted_address"):
+                docket_data["formatted_address"] = geo.get("display_name") or geo.get("formatted_address") or geo.get("address")
+            if not docket_data.get("latitude"):
+                docket_data["latitude"] = geo.get("latitude") or geo.get("lat")
+            if not docket_data.get("longitude"):
+                docket_data["longitude"] = geo.get("longitude") or geo.get("lng") or geo.get("lon")
+
         pdf_bytes = LegalDocketPDFGenerator.generate_docket_pdf(docket_data)
         docket_id = docket_data.get("docket_id", "GOI-LM-2026-REPORT")
         filename = f"Statutory_Docket_{docket_id}.pdf"
