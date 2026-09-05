@@ -273,7 +273,7 @@ class GeminiVisionService:
                 contents.append(types.Part.from_bytes(data=image_bytes_b, mime_type="image/jpeg"))
 
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.6-flash',
                 contents=contents
             )
             raw_text = response.text.strip()
@@ -366,7 +366,7 @@ class GeminiVisionService:
                     contents.append(types.Part.from_bytes(data=base64.b64decode(clean_b64), mime_type="image/jpeg"))
 
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.6-flash',
                 contents=contents
             )
             raw_text = response.text.strip()
@@ -432,7 +432,7 @@ class GeminiVisionService:
                 ]
 
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model='gemini-3.6-flash',
                     contents=contents
                 )
                 raw_text = response.text.strip()
