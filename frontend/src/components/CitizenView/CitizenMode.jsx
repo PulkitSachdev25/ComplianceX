@@ -186,14 +186,7 @@ export default function CitizenMode({
       )}
 
       {/* Product Upload / Camera Modules Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${productCount}, 1fr)`,
-          gap: '1.25rem',
-          marginBottom: '1.25rem'
-        }}
-      >
+      <div className="grid-3" style={{ marginBottom: '1.25rem' }}>
         {productsData.slice(0, productCount).map((p, idx) => (
           <ProductUploadCard
             key={idx}
@@ -239,13 +232,7 @@ export default function CitizenMode({
             </h2>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${productCount}, 1fr)`,
-              gap: '1.25rem'
-            }}
-          >
+          <div className="grid-3">
             {analysisResults.products.map((res, idx) => (
               <AnimatedItem key={idx} index={idx} delay={idx * 0.1}>
                 <DeceptionVerdictCard result={res} slotIndex={idx + 1} />
@@ -265,3 +252,4 @@ export default function CitizenMode({
     </div>
   );
 }
+

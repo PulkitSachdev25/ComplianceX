@@ -417,7 +417,7 @@ export default function CameraRig({
       </div>
 
       {/* 4-Panel Selection Tabs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', marginBottom: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.5rem', marginBottom: '1rem' }}>
         {PANELS_CONFIG.map((p) => {
           const hasImage = Boolean(panels[p.key]);
           const isSelected = selectedPanel === p.key;
@@ -460,7 +460,7 @@ export default function CameraRig({
       </div>
 
       {/* Active Panel Viewfinder & Controls Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.45fr 1fr', gap: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
         
         {/* Viewfinder Column */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -860,3 +860,4 @@ export default function CameraRig({
     </div>
   );
 }
+

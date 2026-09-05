@@ -59,12 +59,12 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
       {/* Top Utility Ribbon */}
       <div className="gov-top-bar">
         <div className="gov-top-bar-content">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
             <span>राष्ट्रीय विधिक माप विज्ञान एवं उपभोक्ता संरक्षण पोर्टल</span>
             <span style={{ color: 'rgba(255,255,255,0.4)' }}>|</span>
             <span>National Legal Metrology & Packaged Commodities Regulatory Portal</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1.25rem' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <Clock size={12} />
               {currentTime}
@@ -206,3 +206,4 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
     </header>
   );
 }
+
