@@ -375,7 +375,7 @@ export default function InspectorMode({
       />
 
       {/* Audit Action Bar */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', margin: '1.5rem 0' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem', margin: '1.5rem 0' }}>
         <button
           className="civic-btn civic-btn-primary"
           style={{ padding: '0.75rem 2rem', fontSize: '0.95rem' }}
@@ -421,7 +421,7 @@ export default function InspectorMode({
 
       {/* Audit Findings & Chain of Custody Displays */}
       {auditResult && (
-        <div id="statutory-audit-findings" style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '1.25rem', marginTop: '1.5rem' }}>
+        <div id="statutory-audit-findings" className="grid-2" style={{ marginTop: '1.5rem' }}>
           <StatutoryAuditCard
             auditData={auditResult}
             onTargetedRescan={handleTargetedRescan}
@@ -454,3 +454,4 @@ export default function InspectorMode({
     </div>
   );
 }
+
