@@ -21,7 +21,12 @@ export default function ProductUploadCard({
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        onChange({ ...productData, [field]: reader.result, preset_key: null });
+        onChange({
+          ...productData,
+          [field]: reader.result,
+          preset_key: null,
+          manual_data: null
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -32,7 +37,8 @@ export default function ProductUploadCard({
     onChange({
       ...productData,
       [field]: dataUrl,
-      preset_key: null
+      preset_key: null,
+      manual_data: null
     });
   };
 

@@ -168,19 +168,66 @@ class GeminiVisionService:
     ) -> Dict[str, Any]:
         """
         Extracts FSSAI nutritional data, ingredients, and front marketing claims.
+        Strictly decouples custom uploads from presets.
         """
+        has_custom_images = bool(front_image_b64 or back_image_b64)
         norm_key = (preset_key or "").lower().strip()
-        if norm_key and norm_key in PRESET_CITIZEN_PRODUCTS:
+
+        # 1. Preset Key ONLY applies if no custom images were uploaded and preset is explicitly specified
+        if not has_custom_images and norm_key and norm_key in PRESET_CITIZEN_PRODUCTS:
             base_data = PRESET_CITIZEN_PRODUCTS[norm_key].copy()
             if manual_override:
                 base_data.update(manual_override)
             return base_data
 
-        api_key = cls.get_api_key()
-        if not api_key or (not front_image_b64 and not back_image_b64):
+        # 2. If no images and no preset, return empty/unidentified item (NO silent pomegranate substitution)
+        if not has_custom_images:
             if manual_override:
                 return manual_override
-            return PRESET_CITIZEN_PRODUCTS["zero_sugar_juice"]
+            return {
+                "product_name": "Unidentified Item",
+                "brand": "Unknown Brand",
+                "fop_claims": [],
+                "ingredients_text": "No package images or label declarations provided.",
+                "nutrition_per_100g": {
+                    "calories": 0.0,
+                    "protein_g": 0.0,
+                    "carbs_g": 0.0,
+                    "total_sugars_g": 0.0,
+                    "added_sugars_g": 0.0,
+                    "total_fat_g": 0.0,
+                    "saturated_fat_g": 0.0,
+                    "trans_fat_g": 0.0,
+                    "sodium_mg": 0.0,
+                    "fiber_g": 0.0
+                },
+                "allergens": []
+            }
+
+        api_key = cls.get_api_key()
+        if not api_key:
+            logger.warning("GEMINI_API_KEY missing for live image extraction.")
+            if manual_override:
+                return manual_override
+            return {
+                "product_name": "Scanned Food Product (API Key Unset)",
+                "brand": "Scanned Product",
+                "fop_claims": [],
+                "ingredients_text": "Gemini API key is not configured on server. Configure GEMINI_API_KEY to enable live multimodal OCR.",
+                "nutrition_per_100g": {
+                    "calories": 0.0,
+                    "protein_g": 0.0,
+                    "carbs_g": 0.0,
+                    "total_sugars_g": 0.0,
+                    "added_sugars_g": 0.0,
+                    "total_fat_g": 0.0,
+                    "saturated_fat_g": 0.0,
+                    "trans_fat_g": 0.0,
+                    "sodium_mg": 0.0,
+                    "fiber_g": 0.0
+                },
+                "allergens": []
+            }
 
         # Call live Google GenAI Multimodal API
         try:
@@ -189,13 +236,14 @@ class GeminiVisionService:
 
             client = genai.Client(api_key=api_key)
             prompt = """
-            You are an official FSSAI Food Safety Inspector in India.
-            Examine the provided food package image(s) (Front of Pack and Back of Pack).
+            You are an official FSSAI Food Safety & Regulatory Specialist in India.
+            Analyze the provided packaging images (medicine, biscuits, snacks, or beverage).
+            Extract the real product name, brand, generic commodity name, nutrition facts, and cross-check front-of-pack claims against the back-of-pack ingredient list under FSSAI Advertising Regulations.
             Extract the following information in strict JSON format:
             {
-              "product_name": "Full product name",
-              "brand": "Brand name",
-              "fop_claims": ["claim 1", "claim 2"],
+              "product_name": "Full real product name",
+              "brand": "Brand name or manufacturer",
+              "fop_claims": ["front claim 1", "front claim 2"],
               "ingredients_text": "Exact ingredients list as printed on package",
               "nutrition_per_100g": {
                 "calories": 0.0,
@@ -211,19 +259,21 @@ class GeminiVisionService:
               },
               "allergens": ["Gluten", "Nuts", etc.]
             }
-            Return ONLY raw valid JSON, no markdown backticks, no other text.
+            Return ONLY raw valid JSON, no markdown backticks, no other commentary.
             """
 
             contents = [prompt]
             if front_image_b64:
-                clean_b64 = front_image_b64.split(",")[-1] if "," in front_image_b64 else front_image_b64
-                contents.append(types.Part.from_bytes(data=base64.b64decode(clean_b64), mime_type="image/jpeg"))
+                clean_b64 = front_image_b64.split(",", 1)[-1] if "," in front_image_b64 else front_image_b64
+                image_bytes = base64.b64decode(clean_b64.strip())
+                contents.append(types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg"))
             if back_image_b64:
-                clean_b64_b = back_image_b64.split(",")[-1] if "," in back_image_b64 else back_image_b64
-                contents.append(types.Part.from_bytes(data=base64.b64decode(clean_b64_b), mime_type="image/jpeg"))
+                clean_b64_b = back_image_b64.split(",", 1)[-1] if "," in back_image_b64 else back_image_b64
+                image_bytes_b = base64.b64decode(clean_b64_b.strip())
+                contents.append(types.Part.from_bytes(data=image_bytes_b, mime_type="image/jpeg"))
 
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-2.0-flash',
                 contents=contents
             )
             raw_text = response.text.strip()
@@ -234,8 +284,28 @@ class GeminiVisionService:
             parsed = json.loads(raw_text.strip())
             return parsed
         except Exception as e:
-            logger.warning(f"Gemini API call failed or unavailable: {e}. Using deterministic parsing.")
-            return PRESET_CITIZEN_PRODUCTS["zero_sugar_juice"]
+            logger.error(f"[Citizen Analysis Error]: {e}")
+            if manual_override:
+                return manual_override
+            return {
+                "product_name": "Scanned Commodity (Unverified Text)",
+                "brand": "Detected from Image",
+                "fop_claims": [],
+                "ingredients_text": f"Automated reading partially incomplete: {str(e)[:60]}. Review raw label.",
+                "nutrition_per_100g": {
+                    "calories": 0.0,
+                    "protein_g": 0.0,
+                    "carbs_g": 0.0,
+                    "total_sugars_g": 0.0,
+                    "added_sugars_g": 0.0,
+                    "total_fat_g": 0.0,
+                    "saturated_fat_g": 0.0,
+                    "trans_fat_g": 0.0,
+                    "sodium_mg": 0.0,
+                    "fiber_g": 0.0
+                },
+                "allergens": []
+            }
 
     @classmethod
     def extract_inspector_declarations(
@@ -296,7 +366,7 @@ class GeminiVisionService:
                     contents.append(types.Part.from_bytes(data=base64.b64decode(clean_b64), mime_type="image/jpeg"))
 
             response = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-2.0-flash',
                 contents=contents
             )
             raw_text = response.text.strip()
@@ -362,7 +432,7 @@ class GeminiVisionService:
                 ]
 
                 response = client.models.generate_content(
-                    model='gemini-2.5-flash',
+                    model='gemini-2.0-flash',
                     contents=contents
                 )
                 raw_text = response.text.strip()

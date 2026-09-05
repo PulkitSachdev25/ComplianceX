@@ -154,12 +154,17 @@ def analyze_citizen_products(payload: CitizenAnalyzeRequest):
 
     results = []
     for idx, prod_req in enumerate(payload.products):
+        # Strict isolation: if custom image exists, do not permit preset override
+        has_images = bool(prod_req.front_image_b64 or prod_req.back_image_b64)
+        preset_key = None if has_images else prod_req.preset_key
+        manual_override = None if has_images else prod_req.manual_data
+
         # Extract via Gemini or Preset
         extracted_data = GeminiVisionService.extract_citizen_nutrition(
             front_image_b64=prod_req.front_image_b64,
             back_image_b64=prod_req.back_image_b64,
-            preset_key=prod_req.preset_key,
-            manual_override=prod_req.manual_data
+            preset_key=preset_key,
+            manual_override=manual_override
         )
 
         # Run Deception Engine

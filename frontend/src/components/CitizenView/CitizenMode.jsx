@@ -84,13 +84,17 @@ export default function CitizenMode({
     setLoading(true);
     setError(null);
     try {
-      const activeProducts = productsData.slice(0, productCount).map((p, idx) => ({
-        product_id: `prod_${idx + 1}`,
-        preset_key: p.preset_key,
-        front_image_b64: p.front_image_b64,
-        back_image_b64: p.back_image_b64,
-        manual_data: p.manual_data
-      }));
+      const activeProducts = productsData.slice(0, productCount).map((prod, idx) => {
+        const hasCustomImages = Boolean(prod.front_image_b64 || prod.back_image_b64);
+        return {
+          product_id: `prod_${idx + 1}`,
+          // Pass preset_key ONLY if no custom images exist AND a dropdown choice was made
+          preset_key: hasCustomImages ? null : (prod.preset_key || null),
+          front_image_b64: prod.front_image_b64 || null,
+          back_image_b64: prod.back_image_b64 || null,
+          manual_data: hasCustomImages ? null : (prod.manual_data || null)
+        };
+      });
 
       const res = await fetch(`${apiBaseUrl}/api/citizen/analyze`, {
         method: 'POST',
