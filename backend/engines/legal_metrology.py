@@ -127,9 +127,9 @@ class LegalMetrologyEngine:
         compliant_rules: List[Dict[str, Any]] = []
 
         mfg_details = audit_input.get("manufacturer_details", {}) or {}
-        commodity = audit_input.get("commodity_name", "") or ""
-        net_qty_raw = audit_input.get("net_quantity", "") or ""
-        mfg_date = audit_input.get("mfg_date", "") or ""
+        commodity = (audit_input.get("commodity_name") or "").strip()
+        net_qty_raw = (audit_input.get("net_quantity") or "").strip()
+        mfg_date = (audit_input.get("mfg_date") or "").strip()
         mrp_raw = audit_input.get("mrp", 0.0)
         declared_usp_raw = audit_input.get("declared_usp", None)
         consumer_care = audit_input.get("consumer_care", {}) or {}
@@ -143,9 +143,12 @@ class LegalMetrologyEngine:
         # -------------------------------------------------------------
         # Rule 6(1)(a): Manufacturer / Packer / Importer Name & Address + PIN
         # -------------------------------------------------------------
-        mfg_name = mfg_details.get("name", "").strip()
-        mfg_address = mfg_details.get("address", "").strip()
-        mfg_pin = str(mfg_details.get("pin_code", "")).strip()
+        if isinstance(mfg_details, dict):
+            mfg_name = (mfg_details.get("name") or "").strip()
+            mfg_address = (mfg_details.get("address") or "").strip()
+            mfg_pin = str(mfg_details.get("pin_code") or "").strip()
+        else:
+            mfg_name, mfg_address, mfg_pin = "", "", ""
 
         has_valid_pin = bool(re.match(r'^[1-9][0-9]{5}$', mfg_pin))
         if not mfg_name or not mfg_address or not has_valid_pin:
@@ -270,9 +273,12 @@ class LegalMetrologyEngine:
         # -------------------------------------------------------------
         # Rule 6(1)(f): Consumer Care & Grievance Details
         # -------------------------------------------------------------
-        care_contact = consumer_care.get("phone", "") or consumer_care.get("tel", "")
-        care_email = consumer_care.get("email", "")
-        care_address = consumer_care.get("address", "")
+        if isinstance(consumer_care, dict):
+            care_contact = (consumer_care.get("phone") or consumer_care.get("tel") or "").strip()
+            care_email = (consumer_care.get("email") or "").strip()
+            care_address = (consumer_care.get("address") or "").strip()
+        else:
+            care_contact, care_email, care_address = "", "", ""
         
         has_care_email = bool(re.search(r'[\w\.-]+@[\w\.-]+\.\w+', str(care_email)))
         has_care_phone = bool(re.search(r'[\d\s-]{8,15}', str(care_contact)))
