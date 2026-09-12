@@ -106,7 +106,55 @@ class TestRegulatoryEngines(unittest.TestCase):
         coc = ChainOfCustody.generate_chain_of_custody(panel_hashes, geo)
         self.assertTrue(coc["master_evidence_sha256"])
         self.assertTrue(coc["merkle_root"])
+        self.assertEqual(coc["total_panels_hashed"], 4)
         self.assertTrue(coc["docket_id"].startswith("GOI-LM-2026-"))
+
+    def test_variable_leaf_merkle_folding(self):
+        """Tests 1, 2, 3 (odd), and 6 leaf Merkle root calculations."""
+        h1 = "1" * 64
+        h2 = "2" * 64
+        h3 = "3" * 64
+        h4 = "4" * 64
+        h5 = "5" * 64
+        h6 = "6" * 64
+
+        # 1 leaf
+        root1 = ChainOfCustody.compute_merkle_root([h1])
+        self.assertEqual(root1, h1)
+
+        # 2 leaves: hash(h1 + h2)
+        root2 = ChainOfCustody.compute_merkle_root([h1, h2])
+        self.assertEqual(root2, ChainOfCustody.hash_string(h1 + h2))
+
+        # 3 leaves (odd count): level 1 duplicates h3 -> [hash(h1+h2), hash(h3+h3)] -> root
+        root3 = ChainOfCustody.compute_merkle_root([h1, h2, h3])
+        expected_l1_0 = ChainOfCustody.hash_string(h1 + h2)
+        expected_l1_1 = ChainOfCustody.hash_string(h3 + h3)
+        expected_root3 = ChainOfCustody.hash_string(expected_l1_0 + expected_l1_1)
+        self.assertEqual(root3, expected_root3)
+        self.assertEqual(len(root3), 64)
+
+        # 6 leaves
+        root6 = ChainOfCustody.compute_merkle_root([h1, h2, h3, h4, h5, h6])
+        self.assertEqual(len(root6), 64)
+
+        # ChainOfCustody generator with 2 panels
+        coc_2 = ChainOfCustody.generate_chain_of_custody(
+            panel_hashes={"panel_1": h1, "panel_2": h2},
+            gps_coords={"latitude": 28.7095, "longitude": 77.1565}
+        )
+        self.assertEqual(coc_2["total_panels_hashed"], 2)
+        self.assertEqual(coc_2["raw_merkle_root"], root2)
+        self.assertEqual(len(coc_2["merkle_root"]), 64)
+
+        # ChainOfCustody generator with 3 panels
+        coc_3 = ChainOfCustody.generate_chain_of_custody(
+            panel_hashes={"panel_1": h1, "panel_2": h2, "panel_3": h3},
+            gps_coords={"latitude": 28.7095, "longitude": 77.1565}
+        )
+        self.assertEqual(coc_3["total_panels_hashed"], 3)
+        self.assertEqual(coc_3["raw_merkle_root"], root3)
+        self.assertEqual(len(coc_3["merkle_root"]), 64)
 
     def test_pdf_generation(self):
         """Tests ReportLab PDF compilation to ensure error-free legal docket output."""
@@ -240,6 +288,26 @@ class TestRegulatoryEngines(unittest.TestCase):
         # (Helvetica would fail or corrupt if raw ₹ is directly unhandled)
         pdf_text = pdf_bytes.decode('latin1', errors='ignore')
         self.assertNotIn("भारत सरकार", pdf_text)
+
+    def test_pdf_generation_dynamic_panel_counts(self):
+        """Tests PDF generation with 2 panels, 3 panels (odd), and 6 panels."""
+        for count in [2, 3, 6]:
+            panel_hashes = {f"panel_{i}": f"{i}" * 64 for i in range(1, count + 1)}
+            merkle = ChainOfCustody.compute_merkle_root(list(panel_hashes.values()))
+            docket = {
+                "docket_id": f"GOI-LM-2026-PANEL{count}",
+                "commodity_name": f"Batch Test Item ({count} Panels)",
+                "net_quantity": "500 g",
+                "mrp": 120.0,
+                "is_compliant": True,
+                "panel_hashes": panel_hashes,
+                "merkle_root": merkle,
+                "master_evidence_sha256": ChainOfCustody.hash_string(f"{merkle}|TEST"),
+                "violations": []
+            }
+            pdf_bytes = LegalDocketPDFGenerator.generate_docket_pdf(docket)
+            self.assertTrue(len(pdf_bytes) > 1000)
+            self.assertTrue(pdf_bytes.startswith(b"%PDF"))
 
 if __name__ == "__main__":
     unittest.main()

@@ -311,41 +311,59 @@ class LegalDocketPDFGenerator:
         panel_hashes = docket_data.get("panel_hashes", {}) or {}
         from engines.chain_of_custody import ChainOfCustody
 
-        # Ensure distinct unique 64-character SHA-256 hashes per panel
-        front_h = panel_hashes.get("front")
-        if not front_h or front_h == "0" * 64 or front_h == "N/A":
-            front_h = ChainOfCustody.hash_string(f"PANEL_FRAME_FRONT_{docket_id}")
+        # Ensure we have at least 1 valid panel hash
+        if not panel_hashes:
+            panel_hashes = {"panel_1": ChainOfCustody.hash_string(f"PANEL_FRAME_DEFAULT_{docket_id}")}
 
-        back_h = panel_hashes.get("back")
-        if not back_h or back_h == "0" * 64 or back_h == "N/A" or back_h == front_h:
-            back_h = ChainOfCustody.hash_string(f"PANEL_FRAME_BACK_{docket_id}")
+        sanitized_hashes = {}
+        for idx, (p_key, p_hash) in enumerate(panel_hashes.items(), start=1):
+            if not p_hash or p_hash in ["N/A", "0" * 64]:
+                sanitized_hashes[p_key] = ChainOfCustody.hash_string(f"PANEL_FRAME_{p_key.upper()}_{docket_id}")
+            else:
+                sanitized_hashes[p_key] = str(p_hash)
 
-        top_h = panel_hashes.get("top")
-        if not top_h or top_h == "0" * 64 or top_h == "N/A" or top_h in [front_h, back_h]:
-            top_h = ChainOfCustody.hash_string(f"PANEL_FRAME_TOP_{docket_id}")
-
-        bottom_h = panel_hashes.get("bottom")
-        if not bottom_h or bottom_h == "0" * 64 or bottom_h == "N/A" or bottom_h in [front_h, back_h, top_h]:
-            bottom_h = ChainOfCustody.hash_string(f"PANEL_FRAME_BOTTOM_{docket_id}")
-
-        master_hash = docket_data.get("master_evidence_sha256")
+        master_hash = (
+            docket_data.get("merkle_root")
+            or docket_data.get("master_evidence_sha256")
+            or docket_data.get("raw_merkle_root")
+        )
         if not master_hash or master_hash in ["N/A", "0" * 64]:
-            merkle_root = ChainOfCustody.hash_string(f"{front_h[:32]}:{back_h[:32]}:{top_h[:32]}:{bottom_h[:32]}")
-            master_hash = ChainOfCustody.hash_string(f"{merkle_root}|{docket_id}")
+            master_hash = ChainOfCustody.compute_merkle_root(list(sanitized_hashes.values()))
 
         hash_data = [
-            [Paragraph("<b>Evidence Panel</b>", body_bold), Paragraph("<b>SHA-256 Cryptographic Fingerprint (Section 65B BSA Admissible)</b>", body_bold)],
-            [Paragraph("Panel 1: FRONT", body_text), Paragraph(front_h, code_style)],
-            [Paragraph("Panel 2: BACK", body_text), Paragraph(back_h, code_style)],
-            [Paragraph("Panel 3: TOP", body_text), Paragraph(top_h, code_style)],
-            [Paragraph("Panel 4: BOTTOM", body_text), Paragraph(bottom_h, code_style)],
             [
-                Paragraph("<b>MASTER MERKLE ROOT:</b>", body_bold),
-                Paragraph(f"<b>{master_hash}</b>", code_style)
+                Paragraph("<b>Evidence Panel</b>", body_bold),
+                Paragraph("<b>SHA-256 Cryptographic Fingerprint (Section 65B BSA Admissible)</b>", body_bold)
             ]
         ]
 
-        hash_table = Table(hash_data, colWidths=[110, 413])
+        # Friendly panel display titles
+        label_map = {
+            "front": "1. FRONT PANEL",
+            "back": "2. BACK / ADDRESS PANEL",
+            "top": "3. TOP / MRP STAMP",
+            "bottom": "4. BOTTOM / BARCODE",
+            "panel_1": "1. FRONT PANEL",
+            "panel_2": "2. BACK / ADDRESS PANEL",
+            "panel_3": "3. TOP / MRP STAMP",
+            "panel_4": "4. BOTTOM / BARCODE",
+            "panel_5": "5. SIDE PANEL A",
+            "panel_6": "6. SIDE PANEL B"
+        }
+
+        for idx, (p_key, p_hash) in enumerate(sanitized_hashes.items(), start=1):
+            friendly_name = label_map.get(str(p_key).lower(), f"Panel {idx}: {str(p_key).upper()}")
+            hash_data.append([
+                Paragraph(friendly_name, body_text),
+                Paragraph(sanitize_pdf_text(p_hash), code_style)
+            ])
+
+        hash_data.append([
+            Paragraph("<b>MASTER MERKLE ROOT:</b>", body_bold),
+            Paragraph(f"<b>{sanitize_pdf_text(master_hash)}</b>", code_style)
+        ])
+
+        hash_table = Table(hash_data, colWidths=[140, 383])
         hash_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), SLATE_BG),
             ('GRID', (0, 0), (-1, -1), 0.5, LIGHT_GRAY),

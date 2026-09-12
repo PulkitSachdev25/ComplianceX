@@ -255,18 +255,17 @@ def audit_legal_metrology(payload: InspectorAuditRequest):
     # 2. Run Rules Engine & USP Math validation
     validation_res = LegalMetrologyEngine.validate_audit(audit_data)
 
-    # 3. Compute SHA-256 panel hashes if not already provided
+    # Dynamic SHA-256 computation over received panels
     panel_hashes = payload.panel_hashes or {}
-    for panel_name in ["front", "back", "top", "bottom"]:
-        if panel_name not in panel_hashes or not panel_hashes[panel_name]:
-            img_b64 = panels.get(panel_name, "")
-            if img_b64:
-                panel_hashes[panel_name] = ChainOfCustody.hash_string(img_b64)
-            else:
-                # Deterministic synthetic evidence hash
-                panel_hashes[panel_name] = ChainOfCustody.hash_string(f"PANEL_RAW_FRAME_{panel_name.upper()}_{payload.preset_key or 'CUSTOM'}")
+    if panels:
+        for p_key, img_b64 in panels.items():
+            if p_key not in panel_hashes or not panel_hashes[p_key]:
+                panel_hashes[p_key] = ChainOfCustody.hash_string(str(img_b64))
 
-    # 4. Generate Master Chain of Custody ledger
+    if not panel_hashes:
+        panel_hashes = {"panel_1": ChainOfCustody.hash_string(f"DUMMY_FRAME_{payload.preset_key or 'RAW'}")}
+
+    # 4. Generate Master Chain of Custody ledger with variable-leaf Merkle root
     geo_input = payload.location or payload.geolocation or {
         "latitude": 28.7095,
         "longitude": 77.1565,

@@ -3,41 +3,29 @@ import { Camera, RefreshCw, AlertTriangle, CheckCircle, Upload, Eye, Focus, Spar
 import { calculateLaplacianVariance } from '../../utils/laplacian';
 import { computeSha256 } from '../../utils/crypto';
 
-// Statutory 4 Panels configuration referencing scanner_backend
-const PANELS_CONFIG = [
-  {
-    key: 'front',
-    label: '1. FRONT PANEL',
-    sub: 'Principal Display Panel (MRP, Brand & Net Quantity)',
-    tip: 'Align brand name and net quantity in view'
-  },
-  {
-    key: 'back',
-    label: '2. BACK / ADDRESS PANEL',
-    sub: 'Manufacturer, Ingredients, Care Cell & Postal PIN',
-    tip: 'Hold close for address and customer care text'
-  },
-  {
-    key: 'top',
-    label: '3. TOP / BOTTOM (STAMP)',
-    sub: 'MRP, Batch Code, Date Stamp & Barcode',
-    tip: 'Show MRP, batch code, and date stamp'
-  },
-  {
-    key: 'bottom',
-    label: '4. FULL / INGREDIENTS SIDE',
-    sub: 'Statutory Declarations, USP & Unit Sale Price',
-    tip: 'Show any remaining statutory declarations'
-  }
+// Statutory Standard Panel Descriptions up to 6 angles
+export const DEFAULT_PANEL_DESCRIPTIONS = [
+  { id: "panel_1", key: "panel_1", label: "1. FRONT PANEL", title: "1. FRONT PANEL", tip: "Align generic commodity title and declared net quantity" },
+  { id: "panel_2", key: "panel_2", label: "2. BACK / ADDRESS PANEL", title: "2. BACK / ADDRESS PANEL", tip: "Hold close for manufacturer address and 6-digit PIN" },
+  { id: "panel_3", key: "panel_3", label: "3. TOP / MRP STAMP", title: "3. TOP / MRP STAMP", tip: "Show printed MRP and month/year of packing" },
+  { id: "panel_4", key: "panel_4", label: "4. BOTTOM / BARCODE", title: "4. BOTTOM / BARCODE", tip: "Align batch code and consumer helpline details" },
+  { id: "panel_5", key: "panel_5", label: "5. SIDE PANEL A", title: "5. SIDE PANEL A", tip: "Capture nutritional facts or secondary ingredients" },
+  { id: "panel_6", key: "panel_6", label: "6. SIDE PANEL B", title: "6. SIDE PANEL B", tip: "Capture supplementary licenses or importer mark" }
 ];
 
 export default function CameraRig({
-  panels,
-  panelHashes,
+  panels = {},
+  panelHashes = {},
   onPanelUpdate,
-  disabled
+  onUnitPanelsComplete,
+  panelsPerItem = 4,
+  currentUnitIndex = 0,
+  totalUnits = 1,
+  disabled = false
 }) {
-  const [selectedPanel, setSelectedPanel] = useState('front');
+  const activePanelsConfig = DEFAULT_PANEL_DESCRIPTIONS.slice(0, Math.min(Math.max(1, panelsPerItem), 6));
+  
+  const [selectedPanel, setSelectedPanel] = useState(activePanelsConfig[0]?.key || 'panel_1');
   const [cameraActive, setCameraActive] = useState(false);
   const [isMirrored, setIsMirrored] = useState(false);
   const [handsfreeMode, setHandsfreeMode] = useState(true);
@@ -62,12 +50,19 @@ export default function CameraRig({
 
   // Timing tracking for steady auto-capture (Inspector: 1.8s steady hold)
   const REQUIRED_STEADY_TIME_MS = 1800;
-  const FLIP_DELAY_SEC = 4;
+  const FLIP_DELAY_SEC = 3;
 
   const steadyStartTimeRef = useRef(null);
   const flipTimerRef = useRef(null);
   const isAutoCapturingRef = useRef(false);
   const animationFrameIdRef = useRef(null);
+
+  // Keep selectedPanel valid when panelsPerItem changes
+  useEffect(() => {
+    if (!activePanelsConfig.some(p => p.key === selectedPanel)) {
+      setSelectedPanel(activePanelsConfig[0]?.key || 'panel_1');
+    }
+  }, [panelsPerItem, activePanelsConfig, selectedPanel]);
 
   // Web Audio API feedback on auto-capture
   const playCaptureBeep = useCallback(() => {
@@ -223,8 +218,7 @@ export default function CameraRig({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Saved Frame Requirement: The captured Base64 frame emitted to the API must ALWAYS remain un-mirrored
-    // so statutory label text reads standard left-to-right for OCR.
+    // Un-mirrored canvas capture for standard left-to-right OCR
     ctx.drawImage(video, 0, 0, width, height);
 
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
@@ -237,24 +231,33 @@ export default function CameraRig({
     setFlashEffect(true);
     setTimeout(() => setFlashEffect(false), 250);
 
-    // Dispatch update
-    onPanelUpdate(activeKey, dataUrl, hash);
+    // Dispatch update to parent
+    if (onPanelUpdate) {
+      onPanelUpdate(activeKey, dataUrl, hash);
+    }
 
-    const currentIndex = PANELS_CONFIG.findIndex((p) => p.key === activeKey);
+    const currentIndex = activePanelsConfig.findIndex((p) => p.key === activeKey);
 
-    // If final panel (bottom) or sequence complete: immediately shut down camera hardware and loop
-    if (activeKey === 'bottom' || currentIndex === PANELS_CONFIG.length - 1) {
+    // If this is the final panel for this unit:
+    if (currentIndex === activePanelsConfig.length - 1) {
       if (videoRef.current && videoRef.current.srcObject) {
         videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
       }
       stopCamera();
       isAutoCapturingRef.current = false;
+
+      // Construct latest full panels state for callback
+      const updatedPanels = { ...panels, [activeKey]: dataUrl };
+      const updatedHashes = { ...panelHashes, [activeKey]: hash };
+      if (onUnitPanelsComplete) {
+        onUnitPanelsComplete(updatedPanels, updatedHashes);
+      }
       return;
     }
 
-    // If handsfree mode is active, handle next panel countdown
-    if (handsfreeMode && currentIndex >= 0 && currentIndex < PANELS_CONFIG.length - 1) {
-      const nextPanel = PANELS_CONFIG[currentIndex + 1];
+    // If handsfree mode is active, handle next panel rotation countdown
+    if (handsfreeMode && currentIndex >= 0 && currentIndex < activePanelsConfig.length - 1) {
+      const nextPanel = activePanelsConfig[currentIndex + 1];
       setNextPanelPrompt(nextPanel);
       
       let secondsLeft = FLIP_DELAY_SEC;
@@ -279,7 +282,7 @@ export default function CameraRig({
     } else {
       isAutoCapturingRef.current = false;
     }
-  }, [selectedPanel, handsfreeMode, onPanelUpdate, playCaptureBeep, stopCamera]);
+  }, [selectedPanel, handsfreeMode, activePanelsConfig, panels, panelHashes, onPanelUpdate, onUnitPanelsComplete, playCaptureBeep, stopCamera]);
 
   // Real-time Laplacian Focus & Micro-Text Auto-Capture Loop (Inspector 1.8s steady hold)
   useEffect(() => {
@@ -368,14 +371,19 @@ export default function CameraRig({
         };
         img.src = b64;
 
-        onPanelUpdate(selectedPanel, b64, hash);
+        if (onPanelUpdate) {
+          onPanelUpdate(selectedPanel, b64, hash);
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const currentPanelConfig = PANELS_CONFIG.find((p) => p.key === selectedPanel) || PANELS_CONFIG[0];
-  const allPanelsCaptured = PANELS_CONFIG.every((p) => Boolean(panels[p.key]));
+  const currentPanelConfig = activePanelsConfig.find((p) => p.key === selectedPanel) || activePanelsConfig[0] || {
+    label: "1. FRONT PANEL",
+    tip: "Align commodity title and net quantity"
+  };
+  const allPanelsCaptured = activePanelsConfig.every((p) => Boolean(panels[p.key]));
 
   // Reticle color determined by steady/sharpness status
   let reticleBorderColor = 'rgba(255, 255, 255, 0.4)';
@@ -399,10 +407,12 @@ export default function CameraRig({
       <div className="civic-card-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Camera size={20} color="#1A365D" />
-          <span className="civic-card-title">4-Panel Statutory Camera Rig & Evidentiary Viewfinder</span>
+          <span className="civic-card-title">
+            {panelsPerItem}-Panel Statutory Camera Rig & Evidentiary Viewfinder
+          </span>
         </div>
 
-        {/* Hands-Free Selector */}
+        {/* Hands-Free Selector & Progress */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', fontWeight: 600, color: '#1A365D', cursor: 'pointer' }}>
             <input
@@ -416,9 +426,9 @@ export default function CameraRig({
         </div>
       </div>
 
-      {/* 4-Panel Selection Tabs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.5rem', marginBottom: '1rem' }}>
-        {PANELS_CONFIG.map((p) => {
+      {/* Dynamic Panel Selection Tabs */}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(activePanelsConfig.length, 6)}, minmax(110px, 1fr))`, gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto' }}>
+        {activePanelsConfig.map((p, idx) => {
           const hasImage = Boolean(panels[p.key]);
           const isSelected = selectedPanel === p.key;
           return (
@@ -543,7 +553,7 @@ export default function CameraRig({
               />
             )}
 
-            {/* Flip Countdown Overlay */}
+            {/* Flip / Rotation Countdown Overlay */}
             {flipCountdown !== null && nextPanelPrompt && (
               <div
                 style={{
@@ -561,7 +571,7 @@ export default function CameraRig({
                 }}
               >
                 <div style={{ color: '#ECC94B', fontSize: '1.15rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                  FLIP TO: {nextPanelPrompt.label}
+                  ROTATE TO: {nextPanelPrompt.label}
                 </div>
                 <div style={{ fontSize: '0.85rem', color: '#E2E8F0', marginBottom: '1rem' }}>
                   {nextPanelPrompt.tip}
@@ -583,7 +593,7 @@ export default function CameraRig({
                   {flipCountdown}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#CBD5E0', marginTop: '0.75rem' }}>
-                  Scanning starts in {flipCountdown}s... (or click to skip)
+                  Auto-capture starts in {flipCountdown}s... (or click below to scan now)
                 </div>
                 <button
                   className="civic-btn civic-btn-outline"
@@ -659,7 +669,7 @@ export default function CameraRig({
               </div>
             </div>
 
-            {/* Video Stream Element (Always mounted to guarantee reliable stream binding) */}
+            {/* Video Stream Element */}
             <video
               ref={videoRef}
               autoPlay
@@ -828,7 +838,7 @@ export default function CameraRig({
                   </button>
                 </>
               ) : (
-                <button className="civic-btn civic-btn-primary" style={{ flex: 1 }} onClick={startCamera}>
+                <button className="civic-btn civic-btn-primary" style={{ flex: 1 }} onClick={startCamera} disabled={disabled}>
                   <Camera size={14} /> Start Live Camera Feed
                 </button>
               )}
@@ -838,6 +848,7 @@ export default function CameraRig({
               className="civic-btn civic-btn-outline"
               onClick={() => fileInputRef.current?.click()}
               style={{ width: '100%' }}
+              disabled={disabled}
             >
               <Upload size={14} /> Upload Frame for {selectedPanel.toUpperCase()}
             </button>
@@ -851,7 +862,7 @@ export default function CameraRig({
 
             {allPanelsCaptured && (
               <div style={{ textAlign: 'center', fontSize: '0.72rem', color: '#2F855A', fontWeight: 700, marginTop: '0.2rem' }}>
-                ✓ All 4 Statutory Panels Captured & SHA Hashed
+                ✓ All {panelsPerItem} Statutory Panels Captured & SHA Hashed
               </div>
             )}
           </div>
@@ -860,4 +871,3 @@ export default function CameraRig({
     </div>
   );
 }
-
