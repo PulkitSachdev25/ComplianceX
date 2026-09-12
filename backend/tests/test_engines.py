@@ -332,5 +332,44 @@ class TestRegulatoryEngines(unittest.TestCase):
             self.assertTrue(len(pdf_bytes) > 1000)
             self.assertTrue(pdf_bytes.startswith(b"%PDF"))
 
+    def test_postal_service_reconciliation(self):
+        """Tests PostalReconciliationService PIN cross-checks and ambiguity flagging."""
+        from engines.postal_service import PostalReconciliationService
+        PostalReconciliationService.initialize()
+
+        # 1. Omitted PIN
+        res_omitted = PostalReconciliationService.verify_declaration_pin(None, "Sector 18, Gurugram")
+        self.assertEqual(res_omitted["status"], "OMITTED")
+        self.assertFalse(res_omitted["is_compliant"])
+
+        # 2. Truncated / Invalid PIN
+        res_invalid = PostalReconciliationService.verify_declaration_pin("11002", "New Delhi")
+        self.assertEqual(res_invalid["status"], "RESCAN_REQUIRED")
+        self.assertFalse(res_invalid["is_compliant"])
+
+        # 3. Valid PIN (110001 - Central Delhi / Delhi)
+        res_valid = PostalReconciliationService.verify_declaration_pin("110001", "Connaught Place, Central Delhi, Delhi")
+        self.assertEqual(res_valid["status"], "COMPLIANT")
+        self.assertTrue(res_valid["is_compliant"])
+
+        # 4. Rule 6(1)(a) integration in LegalMetrologyEngine
+        audit_res = LegalMetrologyEngine.validate_audit({
+            "commodity_name": "Testing Postal Goods",
+            "manufacturer_details": {
+                "name": "Acme Industries",
+                "address": "Okhla Phase 3, New Delhi",
+                "pin_code": "11002" # Truncated
+            },
+            "net_quantity": "100 g",
+            "mrp": 50.0,
+            "mfg_date": "01/2026",
+            "declared_usp": 0.50
+        })
+        self.assertFalse(audit_res["is_compliant"])
+        r61a_viol = [v for v in audit_res["violations"] if v["rule_number"] == "Rule 6(1)(a)"]
+        self.assertTrue(len(r61a_viol) > 0)
+        self.assertEqual(r61a_viol[0]["status"], "RESCAN_REQUIRED")
+        self.assertEqual(r61a_viol[0]["category"], "AMBIGUITY_ERROR")
+
 if __name__ == "__main__":
     unittest.main()

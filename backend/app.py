@@ -9,6 +9,7 @@ import json
 import logging
 import requests
 from typing import Dict, Any, List, Optional
+from contextlib import asynccontextmanager
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -22,14 +23,28 @@ from engines.legal_metrology import LegalMetrologyEngine
 from engines.chain_of_custody import ChainOfCustody
 from engines.gemini_service import GeminiVisionService, PRESET_CITIZEN_PRODUCTS, PRESET_INSPECTOR_CASES
 from engines.pdf_generator import LegalDocketPDFGenerator
+from engines.postal_service import PostalReconciliationService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("regulatory-portal")
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        loaded = PostalReconciliationService.initialize()
+        if loaded:
+            logger.info(f"[Lifespan] Postal verification engine initialized with {len(PostalReconciliationService.get_valid_pins())} PINs.")
+    except Exception as e:
+        logger.error(f"[Lifespan] Error initializing postal service: {e}")
+    yield
+
+
 app = FastAPI(
     title="Government of India - National Regulatory Portal API",
     description="Statutory enforcement backend for FSSAI nutrition deception detection and Legal Metrology Section 36(1) compliance audits.",
-    version="2.0.0"
+    version="2.0.0",
+    lifespan=lifespan
 )
 
 # Enable CORS for local frontend development
@@ -80,7 +95,9 @@ def health_check():
         "status": "OPERATIONAL",
         "jurisdiction": "Government of India - Ministry of Consumer Affairs & FSSAI",
         "timestamp": datetime.utcnow().isoformat(),
-        "gemini_api_configured": bool(config.GEMINI_API_KEY)
+        "gemini_api_configured": bool(config.GEMINI_API_KEY),
+        "postal_service_initialized": PostalReconciliationService._initialized,
+        "valid_pins_count": len(PostalReconciliationService.get_valid_pins())
     }
 
 @app.get("/api/presets/citizen")

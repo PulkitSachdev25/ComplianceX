@@ -7,6 +7,8 @@ of the Legal Metrology (Packaged Commodities) Rules, 2011, under Section 36(1) o
 import re
 from typing import Dict, Any, List, Optional, Tuple
 
+from engines.postal_service import PostalReconciliationService
+
 
 class LegalMetrologyEngine:
     """Rules and math validation engine for Legal Metrology Packaged Commodities."""
@@ -171,17 +173,25 @@ class LegalMetrologyEngine:
         else:
             mfg_name, mfg_address, mfg_pin = "", "", ""
 
-        has_valid_pin = bool(re.search(r'^[1-9][0-9]{5}$', mfg_pin))
-        if not mfg_name or not mfg_address or not has_valid_pin:
+        pin_check = PostalReconciliationService.verify_declaration_pin(mfg_pin, mfg_address)
+
+        if not mfg_name or not mfg_address or not pin_check["is_compliant"]:
             reasons = []
-            if not mfg_name: reasons.append("Missing Manufacturer/Packer Name")
-            if not mfg_address: reasons.append("Incomplete Postal Address")
-            if not has_valid_pin: reasons.append("Missing or Invalid 6-digit Indian Postal PIN Code")
+            if not mfg_name:
+                reasons.append("Missing Manufacturer/Packer Name")
+            if not mfg_address:
+                reasons.append("Incomplete Postal Address")
+            if not pin_check["is_compliant"]:
+                reasons.append(pin_check["note"])
             
+            category = "AMBIGUITY_ERROR" if pin_check["status"] == "RESCAN_REQUIRED" else "OMISSION_ERROR"
+
             violations.append({
                 "rule_number": "Rule 6(1)(a)",
+                "declaration_name": "Name, Complete Address & PIN of Manufacturer",
                 "statute": "Legal Metrology (Packaged Commodities) Rules, 2011",
-                "category": "MANUFACTURER_DECLARATION_VIOLATION",
+                "category": category,
+                "status": pin_check["status"],
                 "severity": "CRITICAL",
                 "title": "Non-Compliant Manufacturer/Packer Address Declaration",
                 "details": f"Incomplete details: {', '.join(reasons)}.",
@@ -192,9 +202,11 @@ class LegalMetrologyEngine:
         else:
             compliant_rules.append({
                 "rule_number": "Rule 6(1)(a)",
+                "declaration_name": "Manufacturer Name, Address & PIN",
                 "title": "Manufacturer/Packer Declaration",
                 "status": "COMPLIANT",
-                "evidence": f"{mfg_name}, {mfg_address} - PIN {mfg_pin}"
+                "evidence": f"{mfg_name}, {mfg_address} - PIN {mfg_pin}",
+                "auto_reconciled_note": pin_check["note"]
             })
 
         # -------------------------------------------------------------
