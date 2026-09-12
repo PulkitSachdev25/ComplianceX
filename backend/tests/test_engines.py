@@ -144,6 +144,9 @@ class TestRegulatoryEngines(unittest.TestCase):
             gps_coords={"latitude": 28.7095, "longitude": 77.1565}
         )
         self.assertEqual(coc_2["total_panels_hashed"], 2)
+        self.assertEqual(len(coc_2["panel_hashes"]), 2)
+        self.assertEqual(len(coc_2["individual_hashes"]), 2)
+        self.assertEqual(coc_2["master_hash"], ChainOfCustody.hash_string(h1 + h2))
         self.assertEqual(coc_2["raw_merkle_root"], root2)
         self.assertEqual(len(coc_2["merkle_root"]), 64)
 
@@ -153,8 +156,28 @@ class TestRegulatoryEngines(unittest.TestCase):
             gps_coords={"latitude": 28.7095, "longitude": 77.1565}
         )
         self.assertEqual(coc_3["total_panels_hashed"], 3)
+        self.assertEqual(len(coc_3["panel_hashes"]), 3)
+        self.assertEqual(len(coc_3["individual_hashes"]), 3)
+        self.assertEqual(coc_3["master_hash"], ChainOfCustody.hash_string(h1 + h2 + h3))
         self.assertEqual(coc_3["raw_merkle_root"], root3)
         self.assertEqual(len(coc_3["merkle_root"]), 64)
+
+    def test_dynamic_panel_hashing_exact_count(self):
+        """Tests that passing 2 panels generates exactly 2 hashes and ignores nulls/empty."""
+        panel_hashes_2 = {
+            "panel_1": "a" * 64,
+            "panel_2": "b" * 64,
+            "panel_3": None, # Should be ignored
+            "panel_4": ""    # Should be ignored
+        }
+        geo = {"latitude": 28.7095, "longitude": 77.1565}
+        coc = ChainOfCustody.generate_chain_of_custody(panel_hashes_2, geo)
+        self.assertEqual(coc["total_panels_hashed"], 2)
+        self.assertEqual(set(coc["panel_hashes"].keys()), {"panel_1", "panel_2"})
+        self.assertEqual(len(coc["individual_hashes"]), 2)
+        self.assertEqual(coc["individual_hashes"][0]["panel_id"], "panel_1")
+        self.assertEqual(coc["individual_hashes"][1]["panel_id"], "panel_2")
+        self.assertEqual(coc["master_hash"], ChainOfCustody.hash_string("a"*64 + "b"*64))
 
     def test_pdf_generation(self):
         """Tests ReportLab PDF compilation to ensure error-free legal docket output."""

@@ -1,6 +1,7 @@
 """
 Chain of Custody & Forensic Cryptographic Ledger
-Computes SHA-256 digital signatures across dynamic panels (1 to N) with variable-leaf Merkle root calculation
+Computes dynamic SHA-256 digital signatures across active camera panels (1 to N)
+with sequential combined Master Hash and variable-leaf Merkle root calculation
 to guarantee evidentiary admissibility under Section 65B of the Indian Evidence Act / Section 63 Bharatiya Sakshya Adhiniyam, 2023.
 """
 
@@ -10,7 +11,7 @@ from typing import Dict, Any, List, Optional
 
 
 class ChainOfCustody:
-    """Manages tamper-proof cryptographic ledger and variable-leaf Merkle evidence hashes."""
+    """Manages tamper-proof cryptographic ledger and dynamic panel evidence hashes."""
 
     @staticmethod
     def hash_bytes(data: bytes) -> str:
@@ -23,9 +24,20 @@ class ChainOfCustody:
         return hashlib.sha256(data_str.encode("utf-8")).hexdigest()
 
     @classmethod
+    def compute_master_hash(cls, leaf_hashes: List[str]) -> str:
+        """
+        Deterministically combines the hashes of the active panels in sequential order:
+        SHA-256(hash_1 + hash_2 + ... + hash_N)
+        """
+        if not leaf_hashes:
+            return cls.hash_string("EMPTY_EVIDENTIARY_RECORD")
+        combined_payload = "".join(leaf_hashes)
+        return cls.hash_string(combined_payload)
+
+    @classmethod
     def compute_merkle_root(cls, leaf_hashes: List[str]) -> str:
         """
-        Iteratively folds an arbitrary list of SHA-256 hashes into a master Merkle root.
+        Iteratively folds an arbitrary list of SHA-256 hashes into a Merkle root.
         Supports 1, 2, 3, 4, or N panel captures.
         """
         if not leaf_hashes:
@@ -54,9 +66,13 @@ class ChainOfCustody:
     ) -> Dict[str, Any]:
         """
         Builds the Section 63 BSA compliance ledger from dynamic panel hashes.
+        Dynamically processes ONLY the provided non-empty panel hashes (exactly N panels).
         """
-        # Extract ordered hash list regardless of panel naming
-        leaf_hashes = list(panel_hashes.values())
+        # Filter out empty or null values to strictly process only active/uploaded panels
+        active_panel_hashes = {k: v for k, v in panel_hashes.items() if v}
+        leaf_hashes = list(active_panel_hashes.values())
+        
+        master_hash = cls.compute_master_hash(leaf_hashes)
         raw_merkle_root = cls.compute_merkle_root(leaf_hashes)
 
         timestamp_iso = datetime.now(timezone.utc).isoformat()
@@ -75,17 +91,29 @@ class ChainOfCustody:
         loc_str = gps_coords.get("display_name") or gps_coords.get("formatted_address") or "New Delhi, India"
 
         # Composite evidentiary signature
-        composite_sig_payload = f"{raw_merkle_root}|{inspector_id}|{timestamp_iso}|{lat:.4f},{lng:.4f}"
+        composite_sig_payload = f"{master_hash}|{inspector_id}|{timestamp_iso}|{lat:.4f},{lng:.4f}"
         master_evidence_seal = cls.hash_string(composite_sig_payload)
 
-        generated_docket_id = docket_id if docket_id else f"GOI-LM-2026-{raw_merkle_root[:8].upper()}"
+        generated_docket_id = docket_id if docket_id else f"GOI-LM-2026-{master_hash[:8].upper()}"
+
+        # Array of individual hashes tagged by their panel identifier and 1-based index
+        individual_hashes_list = [
+            {
+                "panel_id": k,
+                "hash": v,
+                "index": idx + 1
+            }
+            for idx, (k, v) in enumerate(active_panel_hashes.items())
+        ]
 
         return {
             "docket_id": generated_docket_id,
+            "master_hash": master_hash,
             "merkle_root": master_evidence_seal,
             "raw_merkle_root": raw_merkle_root,
             "master_evidence_sha256": master_evidence_seal,
-            "panel_hashes": panel_hashes,
+            "panel_hashes": active_panel_hashes,
+            "individual_hashes": individual_hashes_list,
             "total_panels_hashed": len(leaf_hashes),
             "inspector_id": inspector_id,
             "timestamp_utc": timestamp_iso,

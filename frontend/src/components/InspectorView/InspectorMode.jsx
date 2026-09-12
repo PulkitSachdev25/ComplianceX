@@ -179,9 +179,18 @@ export default function InspectorMode({
       lng: 77.1565
     };
 
+    const activePanels = {};
+    const activeHashes = {};
+    Object.entries(unitPanels || {}).forEach(([k, v]) => {
+      if (v && typeof v === 'string' && v.trim() !== '') activePanels[k] = v;
+    });
+    Object.entries(unitHashes || {}).forEach(([k, v]) => {
+      if (v && typeof v === 'string' && v.trim() !== '' && v !== '0'.repeat(64)) activeHashes[k] = v;
+    });
+
     const payload = {
-      panels: unitPanels,
-      panel_hashes: unitHashes,
+      panels: activePanels,
+      panel_hashes: activeHashes,
       location: userLocation,
       geolocation: userLocation,
       inspector_id: inspectorId

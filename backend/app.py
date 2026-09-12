@@ -243,7 +243,8 @@ def audit_legal_metrology(payload: InspectorAuditRequest):
     """
     Runs Legal Metrology 6-Declaration check, USP math validation, and Chain of Custody hash ledger.
     """
-    panels = payload.panels or {}
+    raw_panels = payload.panels or {}
+    panels = {k: v for k, v in raw_panels.items() if v}
     
     # 1. Extract package data via Gemini / Preset
     audit_data = GeminiVisionService.extract_inspector_declarations(
@@ -255,8 +256,13 @@ def audit_legal_metrology(payload: InspectorAuditRequest):
     # 2. Run Rules Engine & USP Math validation
     validation_res = LegalMetrologyEngine.validate_audit(audit_data)
 
-    # Dynamic SHA-256 computation over received panels
-    panel_hashes = payload.panel_hashes or {}
+    # 3. Dynamic SHA-256 computation over ONLY actual uploaded/received panels (1 to N)
+    panel_hashes = {}
+    if payload.panel_hashes:
+        for p_key, h_val in payload.panel_hashes.items():
+            if h_val and h_val != "0" * 64:
+                panel_hashes[p_key] = str(h_val)
+
     if panels:
         for p_key, img_b64 in panels.items():
             if p_key not in panel_hashes or not panel_hashes[p_key]:
@@ -265,7 +271,7 @@ def audit_legal_metrology(payload: InspectorAuditRequest):
     if not panel_hashes:
         panel_hashes = {"panel_1": ChainOfCustody.hash_string(f"DUMMY_FRAME_{payload.preset_key or 'RAW'}")}
 
-    # 4. Generate Master Chain of Custody ledger with variable-leaf Merkle root
+    # 4. Generate Master Chain of Custody ledger with combined Master Hash and variable-leaf Merkle root
     geo_input = payload.location or payload.geolocation or {
         "latitude": 28.7095,
         "longitude": 77.1565,

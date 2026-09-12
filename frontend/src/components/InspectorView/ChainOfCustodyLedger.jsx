@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, MapPin, Hash, CheckCircle2, ShieldCheck, UserCheck, Layers } from 'lucide-react';
+import { Lock, MapPin, Hash, CheckCircle2, ShieldCheck, UserCheck, Layers, FileKey } from 'lucide-react';
 
 const PANEL_NAME_MAP = {
   front: '1. Front Panel',
@@ -22,7 +22,9 @@ export default function ChainOfCustodyLedger({ auditData, geolocation }) {
     timestamp_utc,
     inspector_id = 'LM-INSP-DEL-4091',
     panel_hashes = {},
+    individual_hashes = [],
     total_panels_hashed,
+    master_hash,
     merkle_root,
     raw_merkle_root,
     master_evidence_sha256,
@@ -34,8 +36,11 @@ export default function ChainOfCustodyLedger({ auditData, geolocation }) {
   const lon = geolocation?.longitude || auditData.gps_coordinates?.longitude || auditData.geolocation?.longitude || 77.2090;
   const locationName = geolocation?.display_name || auditData.gps_coordinates?.formatted_address || auditData.geolocation?.display_name || 'Ministry of Consumer Affairs, New Delhi';
 
-  const hashEntries = Object.entries(panel_hashes);
-  const panelCount = total_panels_hashed || hashEntries.length || 0;
+  // Filter down to non-empty active panel hashes
+  const activeEntries = Object.entries(panel_hashes).filter(
+    ([_, val]) => val && String(val) !== '0'.repeat(64) && String(val) !== 'N/A'
+  );
+  const panelCount = total_panels_hashed || activeEntries.length || 0;
 
   return (
     <div className="civic-card">
@@ -45,7 +50,7 @@ export default function ChainOfCustodyLedger({ auditData, geolocation }) {
           <span className="civic-card-title">Section 63 BSA / 65B Cryptographic Chain of Custody</span>
         </div>
         <span className="civic-badge badge-compliant" style={{ fontSize: '0.7rem' }}>
-          <ShieldCheck size={12} /> {panelCount}-Leaf Merkle Sealed
+          <ShieldCheck size={12} /> {panelCount} Active Panel Hash{panelCount === 1 ? '' : 'es'}
         </span>
       </div>
 
@@ -88,10 +93,10 @@ export default function ChainOfCustodyLedger({ auditData, geolocation }) {
       {/* Dynamic Panels SHA-256 Hash Ledger */}
       <div style={{ marginBottom: '1rem' }}>
         <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1A365D', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-          Forensic Panel SHA-256 Hashes ({panelCount} Leaves)
+          Individual Panel SHA-256 Hashes (1 to {panelCount})
         </h4>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.5rem' }}>
-          {hashEntries.map(([panelKey, hashVal], idx) => {
+          {activeEntries.map(([panelKey, hashVal], idx) => {
             const displayName = PANEL_NAME_MAP[panelKey.toLowerCase()] || `Panel ${idx + 1}: ${panelKey.toUpperCase()}`;
             return (
               <div
@@ -116,16 +121,29 @@ export default function ChainOfCustodyLedger({ auditData, geolocation }) {
         </div>
       </div>
 
-      {/* Merkle Root & Master Digest */}
-      <div style={{ backgroundColor: '#EDF2F7', padding: '0.65rem 0.85rem', borderRadius: '2px', borderLeft: '4px solid #1A365D' }}>
-        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1A365D', textTransform: 'uppercase' }}>
-          Master Cryptographic Merkle Root (Digital Seal)
-        </div>
-        <div className="mono-hash" style={{ fontSize: '0.75rem', fontWeight: 'bold', marginTop: '2px', wordBreak: 'break-all' }}>
-          {master_evidence_sha256 || merkle_root || raw_merkle_root || 'N/A'}
-        </div>
-        <div style={{ fontSize: '0.68rem', color: '#718096', marginTop: '0.35rem' }}>
-          {statutory_evidence_clause || evidentiary_standard || 'Certified under Section 63 of Bharatiya Sakshya Adhiniyam, 2023.'}
+      {/* Master Hash & Composite Seal */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {master_hash && (
+          <div style={{ backgroundColor: '#F0FFF4', padding: '0.55rem 0.75rem', borderRadius: '2px', borderLeft: '4px solid #2F855A' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#276749', textTransform: 'uppercase' }}>
+              Sequential Combined Master Hash: SHA-256(h₁ + ... + h_{panelCount})
+            </div>
+            <div className="mono-hash" style={{ fontSize: '0.72rem', fontWeight: 'bold', marginTop: '2px', wordBreak: 'break-all', color: '#22543D' }}>
+              {master_hash}
+            </div>
+          </div>
+        )}
+
+        <div style={{ backgroundColor: '#EDF2F7', padding: '0.65rem 0.85rem', borderRadius: '2px', borderLeft: '4px solid #1A365D' }}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1A365D', textTransform: 'uppercase' }}>
+            Master Cryptographic Merkle Seal (Section 63 BSA Digital Signature)
+          </div>
+          <div className="mono-hash" style={{ fontSize: '0.75rem', fontWeight: 'bold', marginTop: '2px', wordBreak: 'break-all' }}>
+            {master_evidence_sha256 || merkle_root || raw_merkle_root || master_hash || 'N/A'}
+          </div>
+          <div style={{ fontSize: '0.68rem', color: '#718096', marginTop: '0.35rem' }}>
+            {statutory_evidence_clause || evidentiary_standard || 'Certified under Section 63 of Bharatiya Sakshya Adhiniyam, 2023.'}
+          </div>
         </div>
       </div>
     </div>

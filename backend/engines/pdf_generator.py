@@ -311,24 +311,19 @@ class LegalDocketPDFGenerator:
         panel_hashes = docket_data.get("panel_hashes", {}) or {}
         from engines.chain_of_custody import ChainOfCustody
 
-        # Ensure we have at least 1 valid panel hash
-        if not panel_hashes:
-            panel_hashes = {"panel_1": ChainOfCustody.hash_string(f"PANEL_FRAME_DEFAULT_{docket_id}")}
-
-        sanitized_hashes = {}
-        for idx, (p_key, p_hash) in enumerate(panel_hashes.items(), start=1):
-            if not p_hash or p_hash in ["N/A", "0" * 64]:
-                sanitized_hashes[p_key] = ChainOfCustody.hash_string(f"PANEL_FRAME_{p_key.upper()}_{docket_id}")
-            else:
-                sanitized_hashes[p_key] = str(p_hash)
+        # Ensure we filter down strictly to active non-empty panel hashes
+        active_hashes = {k: str(v) for k, v in panel_hashes.items() if v and str(v) not in ["N/A", "0" * 64, "None", "null"]}
+        if not active_hashes:
+            active_hashes = {"panel_1": ChainOfCustody.hash_string(f"PANEL_FRAME_DEFAULT_{docket_id}")}
 
         master_hash = (
-            docket_data.get("merkle_root")
+            docket_data.get("master_hash")
+            or docket_data.get("merkle_root")
             or docket_data.get("master_evidence_sha256")
             or docket_data.get("raw_merkle_root")
         )
         if not master_hash or master_hash in ["N/A", "0" * 64]:
-            master_hash = ChainOfCustody.compute_merkle_root(list(sanitized_hashes.values()))
+            master_hash = ChainOfCustody.compute_master_hash(list(active_hashes.values()))
 
         hash_data = [
             [
@@ -351,7 +346,7 @@ class LegalDocketPDFGenerator:
             "panel_6": "6. SIDE PANEL B"
         }
 
-        for idx, (p_key, p_hash) in enumerate(sanitized_hashes.items(), start=1):
+        for idx, (p_key, p_hash) in enumerate(active_hashes.items(), start=1):
             friendly_name = label_map.get(str(p_key).lower(), f"Panel {idx}: {str(p_key).upper()}")
             hash_data.append([
                 Paragraph(friendly_name, body_text),
@@ -359,7 +354,7 @@ class LegalDocketPDFGenerator:
             ])
 
         hash_data.append([
-            Paragraph("<b>MASTER MERKLE ROOT:</b>", body_bold),
+            Paragraph("<b>MASTER EVIDENCE SEAL / ROOT:</b>", body_bold),
             Paragraph(f"<b>{sanitize_pdf_text(master_hash)}</b>", code_style)
         ])
 
