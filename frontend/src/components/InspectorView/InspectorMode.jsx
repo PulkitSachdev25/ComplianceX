@@ -8,7 +8,8 @@ import { offlineStorage } from '../../utils/offlineStorage';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function InspectorMode({ 
-  apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://compliancex.onrender.com' 
+  apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://compliancex.onrender.com',
+  currentUser = null
 }) {
   const [presets, setPresets] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -18,7 +19,13 @@ export default function InspectorMode({
   const [offlineNotice, setOfflineNotice] = useState(null);
 
   // Inspector Officer & Geolocation State
-  const [inspectorId, setInspectorId] = useState('LM-INSP-DEL-4091');
+  const [inspectorId, setInspectorId] = useState(() => currentUser?.badgeNumber || 'LM-INSP-DEL-4091');
+
+  useEffect(() => {
+    if (currentUser?.badgeNumber) {
+      setInspectorId(currentUser.badgeNumber);
+    }
+  }, [currentUser]);
   const [geolocation, setGeolocation] = useState({
     latitude: 28.6139,
     longitude: 77.2090,

@@ -1,26 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Scale, HeartPulse, Wifi, WifiOff, Database, Clock, User, LogOut, Lock } from 'lucide-react';
+import { Shield, Scale, HeartPulse, Wifi, WifiOff, Database, Clock, User, LogOut, Lock, KeyRound } from 'lucide-react';
 import { offlineStorage } from '../utils/offlineStorage';
+import { authDb } from '../utils/authDb';
+import AuthModal from './Auth/AuthModal';
 import PillNav from '../PillNav';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 import shieldLogo from '../assets/lmpc_shield_logo.png';
 
-export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }) {
+export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, onAuthModalToggle }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queuedCount, setQueuedCount] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date().toUTCString());
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const raw = localStorage.getItem('lmpc_user');
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
-    }
-  });
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(() => authDb.getCurrentUser());
 
   const handleLogout = () => {
-    localStorage.removeItem('lmpc_token');
-    localStorage.removeItem('lmpc_user');
+    authDb.logout();
     setCurrentUser(null);
   };
 
@@ -32,12 +27,7 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
     window.addEventListener('offline', handleOffline);
 
     const checkAuth = () => {
-      try {
-        const raw = localStorage.getItem('lmpc_user');
-        setCurrentUser(raw ? JSON.parse(raw) : null);
-      } catch (e) {
-        setCurrentUser(null);
-      }
+      setCurrentUser(authDb.getCurrentUser());
     };
 
     const updateQueue = () => {
@@ -47,15 +37,18 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
 
     updateQueue();
     checkAuth();
+
+    window.addEventListener('lmpc_auth_change', checkAuth);
     const interval = setInterval(() => {
       setCurrentTime(new Date().toUTCString());
       updateQueue();
       checkAuth();
-    }, 3000);
+    }, 2000);
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('lmpc_auth_change', checkAuth);
       clearInterval(interval);
     };
   }, []);
@@ -75,6 +68,14 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
       onClick: (e) => {
         if (e) e.preventDefault();
         onModeChange('inspector');
+      }
+    },
+    {
+      label: currentUser ? `${currentUser.badgeNumber || 'Officer'}` : "Officer Sign In",
+      href: "#auth",
+      onClick: (e) => {
+        if (e) e.preventDefault();
+        setAuthModalOpen(true);
       }
     }
   ];
@@ -137,6 +138,13 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
                 padding: '2px 8px',
                 borderRadius: '4px'
               }}>
+                <div style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: '#38E1D9',
+                  boxShadow: '0 0 6px #38E1D9'
+                }} />
                 <User size={12} color="#38E1D9" />
                 <span style={{ color: '#E2E8F0', fontWeight: 600, fontSize: '0.725rem' }}>
                   {currentUser.name} <span style={{ color: '#38E1D9', opacity: 0.85 }}>({currentUser.badgeNumber || 'AUTH'})</span>
@@ -159,27 +167,27 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
                 </button>
               </div>
             ) : (
-              <a
-                href="http://localhost:5001"
-                target="_blank"
-                rel="noreferrer"
+              <button
+                onClick={() => setAuthModalOpen(true)}
                 style={{
                   background: 'linear-gradient(135deg, #38E1D9 0%, #0EA5E9 100%)',
                   color: '#06121E',
-                  textDecoration: 'none',
-                  padding: '2px 9px',
-                  borderRadius: '3px',
-                  fontSize: '0.7rem',
+                  border: 'none',
+                  padding: '3px 10px',
+                  borderRadius: '4px',
+                  fontSize: '0.725rem',
                   fontWeight: 800,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.3rem',
-                  boxShadow: '0 2px 6px rgba(56, 225, 217, 0.3)'
+                  gap: '0.35rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(56, 225, 217, 0.3)',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <Lock size={10} />
+                <Lock size={11} />
                 Officer / Citizen Sign In
-              </a>
+              </button>
             )}
           </div>
         </div>
@@ -284,6 +292,20 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue }
           </div>
         </div>
       </div>
+
+      {/* Statutory Cruip Open PRO Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
+          if (user.role === 'inspector' || user.role === 'fssai') {
+            onModeChange('inspector');
+          } else {
+            onModeChange('citizen');
+          }
+        }}
+      />
     </header>
   );
 }

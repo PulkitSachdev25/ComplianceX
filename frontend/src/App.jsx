@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import CitizenMode from './components/CitizenView/CitizenMode';
 import InspectorMode from './components/InspectorView/InspectorMode';
 import OfflineQueueModal from './components/InspectorView/OfflineQueueModal';
 import AnimatedList from './AnimatedList';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
+import { authDb } from './utils/authDb';
 
 export default function App() {
   const [currentMode, setCurrentMode] = useState('citizen'); // default to citizen or inspector
   const [offlineModalOpen, setOfflineModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(() => authDb.getCurrentUser());
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setCurrentUser(authDb.getCurrentUser());
+    };
+    window.addEventListener('lmpc_auth_change', handleAuthChange);
+    return () => window.removeEventListener('lmpc_auth_change', handleAuthChange);
+  }, []);
 
   const complianceRules = [
     'Rule 6(1)(a) – Manufacturer / Packer Address & Mandatory 6-Digit PIN',
@@ -34,9 +44,9 @@ export default function App() {
       {/* Main Mode View */}
       <main style={{ flex: 1 }}>
         {currentMode === 'citizen' ? (
-          <CitizenMode />
+          <CitizenMode currentUser={currentUser} />
         ) : (
-          <InspectorMode />
+          <InspectorMode currentUser={currentUser} />
         )}
 
         {/* Live Statutory Checklist using AnimatedList */}
