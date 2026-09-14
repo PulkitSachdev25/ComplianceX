@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, ShieldCheck, Zap, ChevronDown, Check, Building2, Shield, HeartPulse, User, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, ShieldCheck, Zap, Check, Building2, Shield, HeartPulse, UserPlus, Lock } from 'lucide-react';
+import shieldLogo from '../../assets/lmpc_shield_logo.png';
 
 // --- TYPE DEFINITIONS ---
 
@@ -21,7 +22,7 @@ interface SignInPageProps {
   statusMessage?: string | null;
 }
 
-// Pre-seeded test accounts
+// Pre-seeded official demo accounts
 const TEST_ACCOUNTS = [
   {
     role: 'inspector' as const,
@@ -31,7 +32,7 @@ const TEST_ACCOUNTS = [
     email: 'inspector.delhi@lmpc.gov.in',
     pass: 'Inspector@2026',
     icon: '🛡️',
-    badgeClass: 'text-violet-400 bg-violet-500/10 border-violet-500/30'
+    badgeClass: 'text-violet-300 bg-violet-500/20 border-violet-500/40'
   },
   {
     role: 'fssai' as const,
@@ -41,7 +42,7 @@ const TEST_ACCOUNTS = [
     email: 'officer.fssai@gov.in',
     pass: 'FSSAI@2026',
     icon: '🔬',
-    badgeClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
+    badgeClass: 'text-emerald-300 bg-emerald-500/20 border-emerald-500/40'
   },
   {
     role: 'packager' as const,
@@ -51,14 +52,14 @@ const TEST_ACCOUNTS = [
     email: 'compliance@dabur.com',
     pass: 'Packager@2026',
     icon: '📦',
-    badgeClass: 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+    badgeClass: 'text-amber-300 bg-amber-500/20 border-amber-500/40'
   }
 ];
 
 // --- SUB-COMPONENTS ---
 
 const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-violet-400/70 focus-within:bg-violet-500/10">
+  <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 backdrop-blur-md transition-all focus-within:border-violet-500 focus-within:bg-zinc-900/90 focus-within:ring-2 focus-within:ring-violet-500/20 shadow-sm">
     {children}
   </div>
 );
@@ -66,7 +67,7 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 // --- MAIN COMPONENT ---
 
 export const SignInPage: React.FC<SignInPageProps> = ({
-  title = <span className="font-light text-foreground tracking-tighter">Welcome</span>,
+  title = "Welcome Back",
   description = "Access your statutory account and continue regulatory & packaging compliance operations",
   onSignIn,
   onResetPassword,
@@ -82,14 +83,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   const [inputIdentifier, setInputIdentifier] = useState('');
   const [inputPassword, setInputPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<'inspector' | 'fssai' | 'packager'>('inspector');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleSelectTestAccount = (acc: typeof TEST_ACCOUNTS[number]) => {
     setMode('signin');
-    setInputIdentifier(acc.id); // Autofills with their official ID (e.g. MFG-3302 or LM-INSP-DEL-4091)
+    setInputIdentifier(acc.id);
     setInputPassword(acc.pass);
     setSelectedRole(acc.role);
-    setDropdownOpen(false);
 
     if (onQuickDemo) {
       onQuickDemo(acc.role);
@@ -124,125 +123,177 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-10 bg-background text-foreground selection:bg-violet-500/30 overflow-y-auto">
-      {/* Spacious, Wide Sign-In Card (max-w-3xl) to eliminate clustering */}
-      <div className="w-full max-w-3xl bg-[#121215] border border-[#27272a] rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden backdrop-blur-xl my-6">
-        {/* Subtle Ambient Radial Glows */}
-        <div className="absolute -top-32 -left-32 w-64 h-64 bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -right-32 w-64 h-64 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-10 lg:p-14 bg-[#08090d] text-zinc-100 selection:bg-violet-500/30 relative overflow-x-hidden">
+      {/* Dynamic Ambient Background Canvas */}
+      <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.18),rgba(255,255,255,0))]" />
+      <div className="fixed inset-0 pointer-events-none bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_50%,#000_70%,transparent_100%)]" />
+      <div className="fixed top-1/4 -left-48 w-[32rem] h-[32rem] bg-violet-600/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="fixed bottom-10 -right-48 w-[32rem] h-[32rem] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col gap-7">
-          {/* Header & Test Account Dropdown Header Row */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#27272a] pb-6">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
-                {mode === 'signin' ? title : 'Create Account'}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-2 max-w-xl">
-                {mode === 'signin'
-                  ? description
-                  : 'Register a new statutory officer or brand packager account for LMPC & FSSAI regulatory compliance'}
-              </p>
+      {/* Spacious, Grand Executive Container (max-w-5xl) */}
+      <div className="w-full max-w-5xl bg-[#111218]/95 border border-zinc-800/80 rounded-3xl shadow-2xl relative overflow-hidden backdrop-blur-2xl z-10 grid grid-cols-1 lg:grid-cols-12 my-6">
+        
+        {/* =========================================================================
+            LEFT PANEL: Statutory Branding & Instant Demo Access (5 Columns)
+            ========================================================================= */}
+        <div className="lg:col-span-5 bg-gradient-to-b from-[#161722] via-[#12131b] to-[#0c0d12] p-6 sm:p-8 md:p-10 border-b lg:border-b-0 lg:border-r border-zinc-800/80 flex flex-col justify-between relative overflow-hidden">
+          {/* Subtle Ambient Radial inside Left Column */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="relative z-10">
+            {/* National Statutory Emblem & Portal Title */}
+            <div className="flex items-center gap-3.5 mb-6">
+              <img 
+                src={shieldLogo} 
+                alt="LMPC Vision Official Shield" 
+                className="w-13 h-13 object-contain drop-shadow-[0_4px_12px_rgba(139,92,246,0.25)]" 
+              />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold tracking-tight text-white font-sans">LMPC Vision</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                    Portal
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-400 mt-0.5">Government of India · Statutory Metrology</p>
+              </div>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0 flex-wrap">
-              {/* Sign In / Create Account Segmented Switch */}
-              <div className="flex items-center p-1 bg-[#09090b]/90 rounded-2xl border border-[#27272a]">
-                <button
-                  type="button"
-                  onClick={() => setMode('signin')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    mode === 'signin'
-                      ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode('signup')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                    mode === 'signup'
-                      ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span>Create Account</span>
-                </button>
+            {/* Statutory Law Badges */}
+            <div className="flex flex-wrap gap-2 mb-8">
+              <span className="text-[11px] font-medium px-3 py-1 rounded-xl bg-zinc-800/70 text-zinc-300 border border-zinc-700/60 flex items-center gap-1.5">
+                <Shield className="w-3 h-3 text-violet-400" />
+                Legal Metrology Act 2009
+              </span>
+              <span className="text-[11px] font-medium px-3 py-1 rounded-xl bg-zinc-800/70 text-zinc-300 border border-zinc-700/60 flex items-center gap-1.5">
+                <Building2 className="w-3 h-3 text-amber-400" />
+                PCR Rules 2011
+              </span>
+              <span className="text-[11px] font-medium px-3 py-1 rounded-xl bg-zinc-800/70 text-zinc-300 border border-zinc-700/60 flex items-center gap-1.5">
+                <HeartPulse className="w-3 h-3 text-emerald-400" />
+                FSSAI 2020 Matrix
+              </span>
+            </div>
+
+            {/* Quick Demo Test Access Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-violet-300 uppercase tracking-wider">
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  Quick Demo Test Access
+                </span>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono">1-Click Auto Fill</span>
               </div>
-
-              {/* Test Accounts Dropdown with ChevronDown Arrow */}
-              <div className="relative shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-violet-950/40 hover:bg-violet-900/50 border border-violet-500/40 text-violet-200 text-xs font-semibold transition-all cursor-pointer shadow-md hover:border-violet-400 active:scale-95"
-                  title="Select from pre-configured test accounts"
-                >
-                  <Zap className="w-3.5 h-3.5 text-violet-400 shrink-0" />
-                  <span>Test Accounts</span>
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Dropdown Menu Options */}
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-[#18181c] border border-[#2e2e34] rounded-2xl shadow-2xl p-2 z-50 animate-element">
-                    <div className="px-3 py-1.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-800">
-                      Select Account (Auto-Fill & Log In)
+              
+              <div className="space-y-2.5">
+                {TEST_ACCOUNTS.map((acc) => (
+                  <button
+                    key={acc.role}
+                    type="button"
+                    onClick={() => handleSelectTestAccount(acc)}
+                    className={`w-full text-left p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center gap-3.5 group relative overflow-hidden ${
+                      selectedRole === acc.role
+                        ? 'bg-violet-950/40 border-violet-500/50 shadow-lg shadow-violet-950/40 scale-[1.01]'
+                        : 'bg-zinc-900/50 hover:bg-zinc-850 border-zinc-800/90 hover:border-zinc-700'
+                    }`}
+                  >
+                    <span className="text-xl p-2 rounded-xl bg-zinc-800/80 border border-zinc-700/60 shrink-0">
+                      {acc.icon}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <span className="text-xs font-semibold text-zinc-100 group-hover:text-white truncate">
+                          {acc.name}
+                        </span>
+                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md border shrink-0 ${acc.badgeClass}`}>
+                          {acc.id}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-zinc-400 truncate">{acc.roleTitle}</p>
                     </div>
-                    <div className="space-y-1 mt-1">
-                      {TEST_ACCOUNTS.map((acc) => (
-                        <button
-                          key={acc.role}
-                          type="button"
-                          onClick={() => handleSelectTestAccount(acc)}
-                          className="w-full text-left p-2.5 rounded-xl hover:bg-white/10 transition-colors flex items-start gap-3 cursor-pointer group"
-                        >
-                          <span className="text-lg mt-0.5">{acc.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-medium text-white flex items-center justify-between">
-                              <span className="truncate">{acc.name}</span>
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-mono ${acc.badgeClass}`}>
-                                {acc.id}
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-zinc-400 truncate">{acc.roleTitle}</div>
-                            <div className="text-[10px] text-zinc-500 font-mono truncate">{acc.email}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Feedback Notifications */}
+          {/* Footer Security Badge */}
+          <div className="pt-6 border-t border-zinc-800/80 mt-8 text-[11px] text-zinc-400 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              Statutory 256-Bit Audit Security
+            </span>
+            <span className="font-mono text-zinc-500 text-[10px]">v2.4.0</span>
+          </div>
+        </div>
+
+        {/* =========================================================================
+            RIGHT PANEL: Interactive Authentication Console (7 Columns)
+            ========================================================================= */}
+        <div className="lg:col-span-7 p-6 sm:p-8 md:p-12 flex flex-col justify-center relative">
+          {/* Top Row: Title + Mode Toggle (Sign In / Create Account) */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-800/80 pb-6 mb-6">
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
+                {mode === 'signin' ? title : 'Create Account'}
+              </h2>
+              <p className="text-xs sm:text-sm text-zinc-400 mt-1 max-w-sm">
+                {mode === 'signin' 
+                  ? description 
+                  : 'Register a new statutory officer or brand packaging account'}
+              </p>
+            </div>
+
+            {/* Pill Mode Switcher */}
+            <div className="flex items-center p-1 bg-[#0a0b10] rounded-2xl border border-zinc-800 shrink-0 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setMode('signin')}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  mode === 'signin'
+                    ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('signup')}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  mode === 'signup'
+                    ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Create Account</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Feedback Banners */}
           {errorMessage && (
-            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2.5">
-              <span>⚠️</span>
-              <span>{errorMessage}</span>
+            <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm flex items-center gap-3 animate-element">
+              <span className="text-lg">⚠️</span>
+              <span className="leading-snug">{errorMessage}</span>
             </div>
           )}
 
           {statusMessage && (
-            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm flex items-center gap-2.5">
-              <span>✅</span>
-              <span>{statusMessage}</span>
+            <div className="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm flex items-center gap-3 animate-element">
+              <span className="text-lg">✅</span>
+              <span className="leading-snug">{statusMessage}</span>
             </div>
           )}
 
           {/* Form */}
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Conditional Fields for Sign In vs Create Account */}
+          <form className="space-y-5" onSubmit={handleSubmit}>
             {mode === 'signup' ? (
               <>
-                {/* Step 1 (Sign Up): Full Legal Name */}
+                {/* Step 1: Full Legal Name */}
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-2">
+                  <label className="text-xs font-medium text-zinc-300 uppercase tracking-wider block mb-2">
                     Step 1 • Full Legal Name
                   </label>
                   <GlassInputWrapper>
@@ -253,18 +304,18 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                       value={inputFullName} 
                       onChange={(e) => setInputFullName(e.target.value)}
                       placeholder="e.g. Sh. Rajeshwar Singh or Vikramaditya Roy" 
-                      className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-foreground placeholder:text-muted-foreground/60" 
+                      className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-white placeholder:text-zinc-500" 
                     />
                   </GlassInputWrapper>
                 </div>
 
-                {/* Step 2 (Sign Up): Email or Desired ID */}
+                {/* Step 2: Email or Packager ID */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <label className="text-xs font-medium text-zinc-300 uppercase tracking-wider">
                       Step 2 • Official Email Address or Packager ID
                     </label>
-                    <span className="text-[11px] text-violet-400">Packager IDs (e.g. MFG-5510) supported</span>
+                    <span className="text-[11px] text-violet-400 font-mono">Accepts MFG-XXXX / email</span>
                   </div>
                   <GlassInputWrapper>
                     <input 
@@ -273,15 +324,15 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                       required 
                       value={inputIdentifier} 
                       onChange={(e) => setInputIdentifier(e.target.value)}
-                      placeholder="e.g. officer@lmpc.gov.in or MFG-5510" 
-                      className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-foreground placeholder:text-muted-foreground/60" 
+                      placeholder="e.g. inspector@lmpc.gov.in or MFG-5510" 
+                      className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-white placeholder:text-zinc-500" 
                     />
                   </GlassInputWrapper>
                 </div>
 
-                {/* Step 3 (Sign Up): Department / Organization (Optional) */}
+                {/* Step 3: Department / Organization (Optional) */}
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-2">
+                  <label className="text-xs font-medium text-zinc-300 uppercase tracking-wider block mb-2">
                     Step 3 • Department / Organization / Company (Optional)
                   </label>
                   <GlassInputWrapper>
@@ -290,15 +341,15 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                       type="text" 
                       value={inputDepartment} 
                       onChange={(e) => setInputDepartment(e.target.value)}
-                      placeholder="e.g. Department of Consumer Affairs or Dabur Packaging Unit" 
-                      className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-foreground placeholder:text-muted-foreground/60" 
+                      placeholder="e.g. Department of Consumer Affairs or Packaging Division" 
+                      className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-white placeholder:text-zinc-500" 
                     />
                   </GlassInputWrapper>
                 </div>
 
-                {/* Step 4 (Sign Up): Password */}
+                {/* Step 4: Password */}
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-2">
+                  <label className="text-xs font-medium text-zinc-300 uppercase tracking-wider block mb-2">
                     Step 4 • Create Password
                   </label>
                   <GlassInputWrapper>
@@ -309,13 +360,13 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                         required 
                         value={inputPassword} 
                         onChange={(e) => setInputPassword(e.target.value)}
-                        placeholder="Create a secure password" 
-                        className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none text-foreground placeholder:text-muted-foreground/60" 
+                        placeholder="Create a secure account password" 
+                        className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none text-white placeholder:text-zinc-500" 
                       />
                       <button 
                         type="button" 
                         onClick={() => setShowPassword(!showPassword)} 
-                        className="absolute inset-y-0 right-3.5 flex items-center text-muted-foreground hover:text-foreground transition-colors p-1"
+                        className="absolute inset-y-0 right-3.5 flex items-center text-zinc-400 hover:text-white transition-colors p-1"
                         title={showPassword ? "Hide password" : "Show password"}
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -326,13 +377,13 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               </>
             ) : (
               <>
-                {/* Step 1 (Sign In): Email or Officer/Packager ID */}
+                {/* Step 1: Email or Officer / Packager ID */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <label className="text-xs font-medium text-zinc-300 uppercase tracking-wider">
                       Step 1 • Email Address or Officer / Packager ID
                     </label>
-                    <span className="text-[11px] text-violet-400">Packager IDs (e.g. MFG-3302) supported</span>
+                    <span className="text-[11px] text-violet-400 font-mono">Packager IDs (e.g. MFG-3302) supported</span>
                   </div>
                   <GlassInputWrapper>
                     <input 
@@ -342,14 +393,14 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                       value={inputIdentifier} 
                       onChange={(e) => setInputIdentifier(e.target.value)}
                       placeholder="Enter your email or ID (e.g. compliance@dabur.com or MFG-3302)" 
-                      className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-foreground placeholder:text-muted-foreground/60" 
+                      className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-white placeholder:text-zinc-500" 
                     />
                   </GlassInputWrapper>
                 </div>
 
-                {/* Step 2 (Sign In): Password */}
+                {/* Step 2: Password */}
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-2">
+                  <label className="text-xs font-medium text-zinc-300 uppercase tracking-wider block mb-2">
                     Step 2 • Password
                   </label>
                   <GlassInputWrapper>
@@ -361,12 +412,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                         value={inputPassword} 
                         onChange={(e) => setInputPassword(e.target.value)}
                         placeholder="Enter your statutory account password" 
-                        className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none text-foreground placeholder:text-muted-foreground/60" 
+                        className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none text-white placeholder:text-zinc-500" 
                       />
                       <button 
                         type="button" 
                         onClick={() => setShowPassword(!showPassword)} 
-                        className="absolute inset-y-0 right-3.5 flex items-center text-muted-foreground hover:text-foreground transition-colors p-1"
+                        className="absolute inset-y-0 right-3.5 flex items-center text-zinc-400 hover:text-white transition-colors p-1"
                         title={showPassword ? "Hide password" : "Show password"}
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -377,81 +428,87 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               </>
             )}
 
-            {/* Step: Navbar of Three Role Options (Inspector, FSSAI, Packager) */}
+            {/* Step 3 (or 5): 3-Role Navbar */}
             <div>
               <div className="flex items-center justify-between mb-2.5">
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <label className="text-xs font-medium text-zinc-300 uppercase tracking-wider">
                   {mode === 'signup' ? 'Step 5 • Select Account Role' : 'Step 3 • Select Role'}
                 </label>
-                <span className="text-[11px] text-violet-400">
-                  {mode === 'signup' ? 'Select role for newly created account' : 'Click to select role, then Sign In below'}
-                </span>
+                <span className="text-[11px] text-violet-400">Click to select role, then Sign In below</span>
               </div>
 
-              {/* The 3-Option Role Navbar */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-1.5 rounded-2xl bg-[#09090b]/80 border border-[#27272a]">
-                {/* Option 1: Inspector */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-1.5 rounded-2xl bg-[#0a0b10] border border-zinc-800">
+                {/* 1. Inspector */}
                 <button
                   type="button"
                   onClick={() => handleRoleNavbarClick('inspector')}
-                  className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                  className={`flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2.5 p-3 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                     selectedRole === 'inspector'
-                      ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30 scale-[1.02] border-violet-400 ring-2 ring-violet-500/40'
-                      : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border-transparent hover:border-white/10'
+                      ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30 border-violet-400 ring-2 ring-violet-500/30 scale-[1.02]'
+                      : 'bg-zinc-900/40 hover:bg-zinc-800/80 text-zinc-300 border-transparent hover:border-zinc-700'
                   }`}
                   title="Select Legal Metrology Inspector role"
                 >
-                  <Shield className="w-4 h-4" />
-                  <span>1. Inspector</span>
-                  {selectedRole === 'inspector' && (
-                    <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-full bg-white/20 font-medium">Selected</span>
-                  )}
+                  <Shield className="w-4 h-4 shrink-0" />
+                  <div className="text-center sm:text-left">
+                    <div className="leading-tight">1. Inspector</div>
+                    <div className={`text-[10px] font-normal ${selectedRole === 'inspector' ? 'text-violet-200' : 'text-zinc-500'}`}>
+                      Legal Metrology
+                    </div>
+                  </div>
+                  {selectedRole === 'inspector' && <Check className="w-3.5 h-3.5 ml-auto hidden sm:block" />}
                 </button>
 
-                {/* Option 2: FSSAI Officer */}
+                {/* 2. FSSAI Officer */}
                 <button
                   type="button"
                   onClick={() => handleRoleNavbarClick('fssai')}
-                  className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                  className={`flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2.5 p-3 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                     selectedRole === 'fssai'
-                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 scale-[1.02] border-emerald-400 ring-2 ring-emerald-500/40'
-                      : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border-transparent hover:border-white/10'
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 border-emerald-400 ring-2 ring-emerald-500/30 scale-[1.02]'
+                      : 'bg-zinc-900/40 hover:bg-zinc-800/80 text-zinc-300 border-transparent hover:border-zinc-700'
                   }`}
                   title="Select FSSAI Food Safety Officer role"
                 >
-                  <HeartPulse className="w-4 h-4" />
-                  <span>2. FSSAI Officer</span>
-                  {selectedRole === 'fssai' && (
-                    <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-full bg-white/20 font-medium">Selected</span>
-                  )}
+                  <HeartPulse className="w-4 h-4 shrink-0" />
+                  <div className="text-center sm:text-left">
+                    <div className="leading-tight">2. FSSAI Officer</div>
+                    <div className={`text-[10px] font-normal ${selectedRole === 'fssai' ? 'text-emerald-200' : 'text-zinc-500'}`}>
+                      Food Safety
+                    </div>
+                  </div>
+                  {selectedRole === 'fssai' && <Check className="w-3.5 h-3.5 ml-auto hidden sm:block" />}
                 </button>
 
-                {/* Option 3: Brand Packager */}
+                {/* 3. Packager */}
                 <button
                   type="button"
                   onClick={() => handleRoleNavbarClick('packager')}
-                  className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                  className={`flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-2.5 p-3 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                     selectedRole === 'packager'
-                      ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 scale-[1.02] border-amber-400 ring-2 ring-amber-500/40'
-                      : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border-transparent hover:border-white/10'
+                      ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 border-amber-400 ring-2 ring-amber-500/30 scale-[1.02]'
+                      : 'bg-zinc-900/40 hover:bg-zinc-800/80 text-zinc-300 border-transparent hover:border-zinc-700'
                   }`}
                   title="Select Brand Packager (MFG) role"
                 >
-                  <Building2 className="w-4 h-4" />
-                  <span>3. Packager</span>
-                  {selectedRole === 'packager' && (
-                    <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-full bg-white/20 font-medium">Selected</span>
-                  )}
+                  <Building2 className="w-4 h-4 shrink-0" />
+                  <div className="text-center sm:text-left">
+                    <div className="leading-tight">3. Packager</div>
+                    <div className={`text-[10px] font-normal ${selectedRole === 'packager' ? 'text-amber-200' : 'text-zinc-500'}`}>
+                      Brand & Packaging
+                    </div>
+                  </div>
+                  {selectedRole === 'packager' && <Check className="w-3.5 h-3.5 ml-auto hidden sm:block" />}
                 </button>
               </div>
             </div>
 
-            {/* Remember Me & Reset Password Controls (Only in Sign In mode) */}
+            {/* Remember Me & Reset Password (Sign In mode only) */}
             {mode === 'signin' && (
               <div className="flex items-center justify-between text-xs pt-1">
-                <label className="flex items-center gap-3 cursor-pointer">
+                <label className="flex items-center gap-2.5 cursor-pointer">
                   <input type="checkbox" name="rememberMe" defaultChecked className="custom-checkbox" />
-                  <span className="text-foreground/80">Keep me signed in</span>
+                  <span className="text-zinc-400">Keep me signed in</span>
                 </label>
                 <a 
                   href="#" 
@@ -463,10 +520,10 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               </div>
             )}
 
-            {/* Main Submit Button */}
+            {/* Submit Action Button */}
             <button 
               type="submit" 
-              className="w-full rounded-2xl bg-primary py-4 font-semibold text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer shadow-xl active:scale-[0.99] text-sm mt-2 tracking-wide flex items-center justify-center gap-2"
+              className="w-full rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 hover:from-violet-500 hover:to-indigo-500 text-white py-4 font-semibold text-sm transition-all cursor-pointer shadow-xl shadow-violet-600/25 active:scale-[0.99] flex items-center justify-center gap-2 border border-violet-400/30 tracking-wide mt-2"
             >
               {mode === 'signup' ? (
                 <>
@@ -474,18 +531,21 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                   <span>Create Account & Access Portal</span>
                 </>
               ) : (
-                <span>Sign In to Regulatory Portal</span>
+                <>
+                  <Lock className="w-4 h-4" />
+                  <span>Sign In to Regulatory Portal</span>
+                </>
               )}
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/20 font-normal">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/20 font-medium">
                 {selectedRole === 'inspector' ? 'as Inspector' : selectedRole === 'fssai' ? 'as FSSAI Officer' : 'as Packager'}
               </span>
             </button>
 
-            {/* Bottom Toggle Between Sign In and Create Account */}
-            <div className="text-center pt-2 text-xs text-muted-foreground border-t border-[#27272a]/60">
+            {/* Bottom Mode Switcher Link */}
+            <div className="text-center pt-3 text-xs text-zinc-400 border-t border-zinc-800/80">
               {mode === 'signin' ? (
                 <span>
-                  Don't have a statutory account yet?{' '}
+                  Don't have an official account yet?{' '}
                   <button
                     type="button"
                     onClick={() => setMode('signup')}
@@ -496,7 +556,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 </span>
               ) : (
                 <span>
-                  Already registered with an official account?{' '}
+                  Already have a registered account?{' '}
                   <button
                     type="button"
                     onClick={() => setMode('signin')}
@@ -509,6 +569,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             </div>
           </form>
         </div>
+
       </div>
     </div>
   );
