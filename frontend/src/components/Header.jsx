@@ -10,6 +10,7 @@ import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hov
 import shieldLogo from '../assets/lmpc_shield_logo.png';
 
 export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, onAuthModalToggle }) {
+  const [currentUser, setCurrentUser] = useState(() => authDb.getCurrentUser());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queuedCount, setQueuedCount] = useState(0);
   const activeBadge = currentUser?.badgeNumber || 'LM-INSP-DEL-4091';
@@ -17,7 +18,6 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
   const [currentTime, setCurrentTime] = useState(new Date().toUTCString());
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(() => authDb.getCurrentUser());
 
   const handleLogout = () => {
     authDb.logout();
