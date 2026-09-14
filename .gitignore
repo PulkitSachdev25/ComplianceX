@@ -33,6 +33,7 @@ __pycache__/
 *.png
 !frontend/src/assets/*.png
 !frontend/public/*.png
+!login-system/public/*.png
 *.pdf
 node_modules/
 dist/

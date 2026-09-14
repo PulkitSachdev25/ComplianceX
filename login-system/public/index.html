@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMPC Vision | Statutory Regulatory Authentication Gateway</title>
+    <link rel="icon" type="image/png" href="shield-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Ambient Background Glows & Grid Mesh -->
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    <div class="grid-overlay"></div>
+
+    <main class="login-wrapper">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="card-header">
+                <div class="logo-wrapper">
+                    <img src="shield-logo.png" alt="LMPC Compliance Shield" class="emblem-img">
+                </div>
+                <div class="badge-pill">
+                    <span class="pulse-dot"></span>
+                    STATUTORY REGULATORY GATEWAY • GOVT OF INDIA
+                </div>
+                <h1 class="brand-title">
+                    <span class="title-cyan">LMPC</span> <span class="title-sky">Vision</span>
+                </h1>
+                <p class="brand-subtitle">Legal Metrology (Packaged Commodities) Rules 2011 & FSSAI Regulatory Portal</p>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="auth-tabs">
+                <button class="tab-btn active" data-tab="login">Sign In</button>
+                <button class="tab-btn" data-tab="register">Create Account</button>
+                <button class="tab-btn" data-tab="demo">Instant Access</button>
+            </div>
+
+            <!-- Feedback Alert Banner -->
+            <div id="alert-banner" class="alert-banner hidden"></div>
+
+            <!-- Tab 1: Sign In Form -->
+            <form id="login-form" class="auth-form active">
+                <div class="form-group">
+                    <label for="login-email">Official / Citizen Email Address</label>
+                    <input type="email" id="login-email" placeholder="e.g. inspector.delhi@lmpc.gov.in" required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <div class="label-with-action">
+                        <label for="login-password">Password</label>
+                        <button type="button" class="text-link toggle-password-btn" data-target="login-password">Show</button>
+                    </div>
+                    <input type="password" id="login-password" placeholder="••••••••••••" required autocomplete="current-password">
+                </div>
+
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" id="remember-me" checked>
+                        <span>Keep statutory session active (24h)</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="submit-btn" id="login-submit-btn">
+                    <span class="btn-text">Authenticate & Open LMPC Console</span>
+                    <span class="btn-spinner hidden"></span>
+                </button>
+            </form>
+
+            <!-- Tab 2: Create Account / Register Form -->
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="reg-name">Full Legal / Officer Name</label>
+                    <input type="text" id="reg-name" placeholder="e.g. Vikramaditya Rathore" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="reg-email">Official Email Address</label>
+                    <input type="email" id="reg-email" placeholder="e.g. yourname@gov.in or email@gmail.com" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reg-role">Designation / Role</label>
+                        <select id="reg-role">
+                            <option value="Senior Legal Metrology Inspector">Legal Metrology Inspector</option>
+                            <option value="FSSAI Food Safety & Regulatory Officer">FSSAI Food Safety Officer</option>
+                            <option value="Citizen Consumer Advocate">Citizen Consumer Advocate</option>
+                            <option value="Brand Packager Compliance Officer">Brand / Manufacturer Packager</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-jurisdiction">Jurisdiction / District</label>
+                        <select id="reg-jurisdiction">
+                            <option value="Central & New Delhi Division">Central & New Delhi</option>
+                            <option value="South Delhi District">South Delhi</option>
+                            <option value="North & West Delhi Division">North & West Delhi</option>
+                            <option value="National Capital Region (NCR)">Delhi NCR</option>
+                            <option value="Mumbai Metropolitan Region">Mumbai MMR</option>
+                            <option value="Bengaluru Urban Division">Bengaluru Urban</option>
+                            <option value="Hyderabad & Telangana Division">Hyderabad Zone</option>
+                            <option value="All-India Central Division">All-India Enforcement</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="label-with-action">
+                        <label for="reg-password">Create Password (min. 6 characters)</label>
+                        <button type="button" class="text-link toggle-password-btn" data-target="reg-password">Show</button>
+                    </div>
+                    <input type="password" id="reg-password" placeholder="••••••••••••" minlength="6" required>
+                </div>
+
+                <button type="submit" class="submit-btn" id="reg-submit-btn">
+                    <span class="btn-text">Create Account & Issue Credential</span>
+                    <span class="btn-spinner hidden"></span>
+                </button>
+            </form>
+
+            <!-- Tab 3: Instant 1-Click Demo Access -->
+            <div id="demo-pane" class="auth-form">
+                <p class="demo-instructions">
+                    Select any pre-configured statutory or consumer profile below for instant 1-click verification into LMPC Vision:
+                </p>
+
+                <div class="demo-cards-grid">
+                    <!-- Inspector Demo Card -->
+                    <div class="demo-card" data-email="inspector.delhi@lmpc.gov.in" data-password="Inspector@2026">
+                        <div class="demo-role-badge badge-inspector">STATUTORY INSPECTOR</div>
+                        <h3 class="demo-name">Vikramaditya Rathore</h3>
+                        <p class="demo-meta">Senior Legal Metrology Inspector • New Delhi Division</p>
+                        <div class="demo-credentials">
+                            <code>inspector.delhi@lmpc.gov.in</code>
+                        </div>
+                        <button type="button" class="demo-btn">Instant Sign In →</button>
+                    </div>
+
+                    <!-- FSSAI Officer Demo Card -->
+                    <div class="demo-card" data-email="officer.fssai@gov.in" data-password="FSSAI@2026">
+                        <div class="demo-role-badge badge-fssai">FSSAI REGULATOR</div>
+                        <h3 class="demo-name">Dr. Priya Sundaram</h3>
+                        <p class="demo-meta">Food Safety & Deception Officer • National Capital Region</p>
+                        <div class="demo-credentials">
+                            <code>officer.fssai@gov.in</code>
+                        </div>
+                        <button type="button" class="demo-btn">Instant Sign In →</button>
+                    </div>
+
+                    <!-- Citizen Demo Card -->
+                    <div class="demo-card" data-email="citizen.ananya@gmail.com" data-password="Citizen@2026">
+                        <div class="demo-role-badge badge-citizen">CITIZEN CONSUMER</div>
+                        <h3 class="demo-name">Ananya Sharma</h3>
+                        <p class="demo-meta">Consumer Protection Advocate • South Delhi</p>
+                        <div class="demo-credentials">
+                            <code>citizen.ananya@gmail.com</code>
+                        </div>
+                        <button type="button" class="demo-btn">Instant Sign In →</button>
+                    </div>
+
+                    <!-- Manufacturer Demo Card -->
+                    <div class="demo-card" data-email="compliance@dabur.com" data-password="Packager@2026">
+                        <div class="demo-role-badge badge-manufacturer">FMCG PACKAGER</div>
+                        <h3 class="demo-name">Rajesh Kulkarni</h3>
+                        <p class="demo-meta">Packaged Commodities Compliance • All-India</p>
+                        <div class="demo-credentials">
+                            <code>compliance@dabur.com</code>
+                        </div>
+                        <button type="button" class="demo-btn">Instant Sign In →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="card-footer">
+                <span>Ministry of Consumer Affairs, Food & Public Distribution</span>
+                <span class="dot-separator">•</span>
+                <span>Section 36(1) Compounding & Rule 6(1) Standards</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Success Launchpad Modal -->
+    <div id="success-modal" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-icon">✓</div>
+            <h2 class="modal-title">Authentication Verified</h2>
+            <p class="modal-subtitle">Secure statutory session established for <span id="modal-user-name" class="highlight-text">Officer</span></p>
+
+            <div class="modal-meta-box">
+                <div class="meta-row">
+                    <span class="meta-label">Role:</span>
+                    <span id="modal-user-role" class="meta-val">Senior Legal Metrology Inspector</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Badge Number:</span>
+                    <span id="modal-user-badge" class="meta-val font-mono">LM-INSP-4091</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Jurisdiction:</span>
+                    <span id="modal-user-jurisdiction" class="meta-val">New Delhi Division</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">JWT Session:</span>
+                    <span id="modal-user-token" class="meta-val font-mono text-truncate">Bearer eyJhbGciOi...</span>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="btn-launch-app" class="modal-btn-primary">
+                    Launch LMPC Vision Console →
+                </button>
+                <button id="btn-dismiss-modal" class="modal-btn-secondary">
+                    Stay on Gateway
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "OFFICER-DEL-4091",
+    "name": "Vikramaditya Rathore",
+    "email": "inspector.delhi@lmpc.gov.in",
+    "passwordHash": "$2a$10$58i7PmWdm6J9su2PcgS2EeT.wNcetN7DvKFSoWAvzCPGOQLh92XHy",
+    "role": "Senior Legal Metrology Inspector",
+    "department": "Department of Consumer Affairs, Govt of India",
+    "jurisdiction": "Central & New Delhi Division",
+    "badgeNumber": "LM-INSP-4091",
+    "createdAt": "2026-09-14T08:04:23.835Z"
+  },
+  {
+    "id": "FSSAI-REG-1024",
+    "name": "Dr. Priya Sundaram",
+    "email": "officer.fssai@gov.in",
+    "passwordHash": "$2a$10$58i7PmWdm6J9su2PcgS2Een2OkI4UEWiaHcX.jYFYIgVRLMvXrbLy",
+    "role": "FSSAI Food Safety & Regulatory Officer",
+    "department": "Food Safety and Standards Authority of India",
+    "jurisdiction": "National Capital Region (NCR)",
+    "badgeNumber": "FSSAI-FSO-1024",
+    "createdAt": "2026-09-14T08:04:23.886Z"
+  },
+  {
+    "id": "CITIZEN-USR-7701",
+    "name": "Ananya Sharma",
+    "email": "citizen.ananya@gmail.com",
+    "passwordHash": "$2a$10$58i7PmWdm6J9su2PcgS2EePfLI.bF4d4DBfQlqkQmKSWrQ8nx0XMm",
+    "role": "Citizen Consumer Advocate",
+    "department": "Consumer Protection Forum",
+    "jurisdiction": "South Delhi",
+    "badgeNumber": "CIVIC-7701",
+    "createdAt": "2026-09-14T08:04:23.937Z"
+  },
+  {
+    "id": "CORP-COMP-3302",
+    "name": "Rajesh Kulkarni",
+    "email": "compliance@dabur.com",
+    "passwordHash": "$2a$10$58i7PmWdm6J9su2PcgS2Eej3sBEjZuD5HSgWKiTEnWacM.RBWoswS",
+    "role": "Brand Packager Compliance Officer",
+    "department": "Packaged Commodities Regulatory Cell",
+    "jurisdiction": "All-India FMCG Manufacturing",
+    "badgeNumber": "MFG-3302",
+    "createdAt": "2026-09-14T08:04:23.988Z"
+  },
+  {
+    "id": "USR-073802",
+    "name": "Inspector Rajesh",
+    "email": "rajesh@lmpc.gov.in",
+    "passwordHash": "$2a$10$QxR6tmVmYCMmDW4T/4Ni0eYm4wGeSKry08.wDzJCwCXyX4XjYSh0C",
+    "role": "Legal Metrology Inspector",
+    "department": "Legal Metrology Enforcement Division",
+    "jurisdiction": "South Delhi District",
+    "badgeNumber": "LMPC-INSP-2558",
+    "createdAt": "2026-09-14T08:04:33.802Z"
+  },
+  {
+    "id": "USR-100992",
+    "name": "Officer Anita",
+    "email": "anita@lmpc.gov.in",
+    "passwordHash": "$2a$10$TSsRjjv5ogsVjzDXJz7Q...n30hTAcL2nci8cqXD134T6S3GXsO7i",
+    "role": "FSSAI Food Safety Officer",
+    "department": "Legal Metrology Enforcement Division",
+    "jurisdiction": "Delhi NCR",
+    "badgeNumber": "LMPC-INSP-4466",
+    "createdAt": "2026-09-14T08:05:00.992Z"
+  }
+]
