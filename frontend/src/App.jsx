@@ -6,7 +6,7 @@ import OfflineQueueModal from './components/InspectorView/OfflineQueueModal';
 import AnimatedList from './AnimatedList';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 import { authDb } from './utils/authDb';
-import { SignInPage, defaultTestimonials } from './components/ui/sign-in';
+import { SignInPage } from './components/ui/sign-in';
 
 export default function App() {
   const [currentMode, setCurrentMode] = useState('inspector'); // default to inspector
@@ -31,43 +31,24 @@ export default function App() {
     return () => window.removeEventListener('lmpc_auth_change', handleAuthChange);
   }, []);
 
-  const handleSignIn = (e) => {
-    e.preventDefault();
+  const handleSignIn = (credentials) => {
     setAuthError(null);
     setAuthStatus(null);
-    const formData = new FormData(e.currentTarget);
-    const email = (formData.get('email') || '').toString().trim();
-    const password = (formData.get('password') || '').toString().trim();
-    const name = (formData.get('name') || '').toString().trim();
+    let email = '';
+    let password = '';
 
-    // If registration mode
-    if (name) {
-      const res = authDb.registerUser({
-        name,
-        email,
-        password,
-        role: 'inspector',
-        department: 'Department of Consumer Affairs',
-        jurisdiction: 'National Portal'
-      });
-      if (!res.success) {
-        setAuthError(res.error || 'Registration failed.');
-        return;
-      }
-      const loginRes = authDb.login(email, password);
-      if (loginRes.success) {
-        sessionStorage.setItem('lmpc_session_active', 'true');
-        setCurrentUser(loginRes.user);
-        return;
-      }
+    if (credentials && typeof credentials === 'object' && credentials.email !== undefined) {
+      email = (credentials.email || '').trim();
+      password = (credentials.password || '').trim();
+    } else if (credentials && credentials.currentTarget) {
+      credentials.preventDefault();
+      const formData = new FormData(credentials.currentTarget);
+      email = (formData.get('email') || '').toString().trim();
+      password = (formData.get('password') || '').toString().trim();
     }
 
-    // Default fallback if fields are blank: 1-click test login as Senior Inspector
-    if (!email || !password) {
-      const defaultOfficer = authDb.findUserByEmail('inspector.delhi@lmpc.gov.in') || authDb.getUsers()[0];
-      const loginRes = authDb.login(defaultOfficer.email, defaultOfficer.password || 'Inspector@2026');
-      sessionStorage.setItem('lmpc_session_active', 'true');
-      setCurrentUser(loginRes.user || defaultOfficer);
+    if (!email) {
+      setAuthError('Please enter your email address.');
       return;
     }
 
@@ -76,31 +57,8 @@ export default function App() {
       sessionStorage.setItem('lmpc_session_active', 'true');
       setCurrentUser(res.user);
     } else {
-      // Seamlessly auto-register custom credentials so users are never blocked
-      const autoReg = authDb.registerUser({
-        name: email.split('@')[0],
-        email: email,
-        password: password,
-        role: 'inspector',
-        department: 'Regulatory Compliance Division',
-        jurisdiction: 'Active Inspection Jurisdiction'
-      });
-      if (autoReg.success) {
-        const loginAgain = authDb.login(email, password);
-        sessionStorage.setItem('lmpc_session_active', 'true');
-        setCurrentUser(loginAgain.user || autoReg.user);
-      } else {
-        setAuthError(res.error || 'Invalid credentials. Please try again.');
-      }
+      setAuthError(res.error || 'Failed to sign in.');
     }
-  };
-
-  const handleGoogleSignIn = () => {
-    setAuthError(null);
-    const officer = authDb.findUserByEmail('officer.fssai@gov.in') || authDb.getUsers()[1];
-    const loginRes = authDb.login(officer.email, 'FSSAI@2026');
-    sessionStorage.setItem('lmpc_session_active', 'true');
-    setCurrentUser(loginRes.user || officer);
   };
 
   const handleResetPassword = () => {
@@ -119,8 +77,10 @@ export default function App() {
       pass = 'Packager@2026';
     }
     const loginRes = authDb.login(email, pass);
-    sessionStorage.setItem('lmpc_session_active', 'true');
-    setCurrentUser(loginRes.user);
+    if (loginRes.success) {
+      sessionStorage.setItem('lmpc_session_active', 'true');
+      setCurrentUser(loginRes.user);
+    }
   };
 
   const complianceRules = [
@@ -138,10 +98,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <SignInPage
-        heroImageSrc="https://cdn.21st.dev/assets/mirror/ec/ecff1664e7fc3185d0e947571f984ea5fa3de9580fb0e73a03cd9c9b3461cb09.jpg"
-        testimonials={defaultTestimonials}
         onSignIn={handleSignIn}
-        onGoogleSignIn={handleGoogleSignIn}
         onResetPassword={handleResetPassword}
         onQuickDemo={handleQuickDemo}
         errorMessage={authError}
