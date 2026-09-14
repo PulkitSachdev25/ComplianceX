@@ -10,7 +10,7 @@ export interface Testimonial {
   text: string;
 }
 
-export type StatutoryRole = 'senior_food_inspector' | 'junior_food_inspector' | 'packager';
+export type StatutoryRole = 'senior_inspector' | 'junior_inspector' | 'senior_food_inspector' | 'junior_food_inspector' | 'packager';
 
 interface SignInPageProps {
   title?: React.ReactNode;
@@ -26,21 +26,21 @@ interface SignInPageProps {
 // Pre-seeded test accounts
 const TEST_ACCOUNTS = [
   {
-    role: 'senior_food_inspector' as const,
-    roleTitle: 'Senior Food Inspector',
+    role: 'senior_inspector' as const,
+    roleTitle: 'Senior Inspector',
     name: 'Sh. Rajeshwar Singh',
-    id: 'SFI-DEL-4091',
-    email: 'senior.food.inspector@lmpc.gov.in',
+    id: 'SI-DEL-4091',
+    email: 'senior.inspector@lmpc.gov.in',
     pass: 'Inspector@2026',
     icon: '🛡️',
     badgeClass: 'text-violet-400 bg-violet-500/10 border-violet-500/30'
   },
   {
-    role: 'junior_food_inspector' as const,
-    roleTitle: 'Junior Food Inspector',
+    role: 'junior_inspector' as const,
+    roleTitle: 'Junior Inspector',
     name: 'Dr. Sunita Deshmukh',
-    id: 'JFI-FSO-1024',
-    email: 'junior.food.inspector@gov.in',
+    id: 'JI-FSO-1024',
+    email: 'junior.inspector@gov.in',
     pass: 'Junior@2026',
     icon: '🔬',
     badgeClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
@@ -83,12 +83,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   const [inputDepartment, setInputDepartment] = useState('');
   const [inputIdentifier, setInputIdentifier] = useState('');
   const [inputPassword, setInputPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<StatutoryRole>('senior_food_inspector');
+  const [selectedRole, setSelectedRole] = useState<StatutoryRole>('senior_inspector');
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleSelectTestAccount = (acc: typeof TEST_ACCOUNTS[number]) => {
     setMode('signin');
-    setInputIdentifier(acc.id); // Autofills with their official ID (e.g. SFI-DEL-4091 or JFI-FSO-1024 or MFG-3302)
+    setInputIdentifier(acc.id); // Autofills with their official ID (e.g. SI-DEL-4091 or JI-FSO-1024 or MFG-3302)
     setInputPassword(acc.pass);
     setSelectedRole(acc.role);
     setDropdownOpen(false);
@@ -392,38 +392,38 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
               {/* The 3-Option Role Navbar */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-1.5 rounded-2xl bg-[#09090b]/80 border border-[#27272a]">
-                {/* Option 1: Senior Food Inspector */}
+                {/* Option 1: Senior Inspector */}
                 <button
                   type="button"
-                  onClick={() => handleRoleNavbarClick('senior_food_inspector')}
+                  onClick={() => handleRoleNavbarClick('senior_inspector')}
                   className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                    selectedRole === 'senior_food_inspector'
+                    selectedRole === 'senior_inspector' || selectedRole === 'senior_food_inspector'
                       ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30 scale-[1.02] border-violet-400 ring-2 ring-violet-500/40'
                       : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border-transparent hover:border-white/10'
                   }`}
-                  title="Select Senior Food Inspector role"
+                  title="Select Senior Inspector role"
                 >
                   <Shield className="w-4 h-4" />
-                  <span>1. Senior Food Inspector</span>
-                  {selectedRole === 'senior_food_inspector' && (
+                  <span>1. Senior Inspector</span>
+                  {(selectedRole === 'senior_inspector' || selectedRole === 'senior_food_inspector') && (
                     <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-full bg-white/20 font-medium">Selected</span>
                   )}
                 </button>
 
-                {/* Option 2: Junior Food Inspector */}
+                {/* Option 2: Junior Inspector */}
                 <button
                   type="button"
-                  onClick={() => handleRoleNavbarClick('junior_food_inspector')}
+                  onClick={() => handleRoleNavbarClick('junior_inspector')}
                   className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                    selectedRole === 'junior_food_inspector'
+                    selectedRole === 'junior_inspector' || selectedRole === 'junior_food_inspector'
                       ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 scale-[1.02] border-emerald-400 ring-2 ring-emerald-500/40'
                       : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border-transparent hover:border-white/10'
                   }`}
-                  title="Select Junior Food Inspector role"
+                  title="Select Junior Inspector role"
                 >
                   <HeartPulse className="w-4 h-4" />
-                  <span>2. Junior Food Inspector</span>
-                  {selectedRole === 'junior_food_inspector' && (
+                  <span>2. Junior Inspector</span>
+                  {(selectedRole === 'junior_inspector' || selectedRole === 'junior_food_inspector') && (
                     <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-full bg-white/20 font-medium">Selected</span>
                   )}
                 </button>
@@ -479,7 +479,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 <span>Sign In to Regulatory Portal</span>
               )}
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/20 font-normal">
-                {selectedRole === 'senior_food_inspector' ? 'as Senior Food Inspector' : selectedRole === 'junior_food_inspector' ? 'as Junior Food Inspector' : 'as Packager'}
+                {(selectedRole === 'senior_inspector' || selectedRole === 'senior_food_inspector') ? 'as Senior Inspector' : (selectedRole === 'junior_inspector' || selectedRole === 'junior_food_inspector') ? 'as Junior Inspector' : 'as Packager'}
               </span>
             </button>
 

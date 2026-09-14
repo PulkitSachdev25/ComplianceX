@@ -348,7 +348,7 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
         onClose={() => setAuthModalOpen(false)}
         onLoginSuccess={(user) => {
           setCurrentUser(user);
-          if (user.role === 'senior_food_inspector' || user.role === 'junior_food_inspector' || user.role === 'inspector' || user.role === 'fssai') {
+          if (user.role === 'senior_inspector' || user.role === 'junior_inspector' || user.role === 'senior_food_inspector' || user.role === 'junior_food_inspector' || user.role === 'inspector' || user.role === 'fssai') {
             onModeChange('inspector');
           } else {
             onModeChange('citizen');

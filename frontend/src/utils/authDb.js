@@ -9,12 +9,12 @@ const SESSION_TOKEN_KEY = 'lmpc_token';
 const DEFAULT_USERS = [
   {
     id: 'usr_gov_01',
-    email: 'senior.food.inspector@lmpc.gov.in',
+    email: 'senior.inspector@lmpc.gov.in',
     password: 'Inspector@2026',
     name: 'Sh. Rajeshwar Singh',
-    role: 'senior_food_inspector',
-    roleLabel: 'Senior Food Inspector',
-    badgeNumber: 'SFI-DEL-4091',
+    role: 'senior_inspector',
+    roleLabel: 'Senior Inspector',
+    badgeNumber: 'SI-DEL-4091',
     department: 'Department of Consumer Affairs, Delhi Circle',
     jurisdiction: 'NCT of Delhi, Central Zone',
     isGovVerified: true,
@@ -22,13 +22,13 @@ const DEFAULT_USERS = [
   },
   {
     id: 'usr_gov_02',
-    email: 'junior.food.inspector@gov.in',
+    email: 'junior.inspector@gov.in',
     password: 'Junior@2026',
     name: 'Dr. Sunita Deshmukh',
-    role: 'junior_food_inspector',
-    roleLabel: 'Junior Food Inspector',
-    badgeNumber: 'JFI-FSO-1024',
-    department: 'Food Safety & Standards Inspection Division',
+    role: 'junior_inspector',
+    roleLabel: 'Junior Inspector',
+    badgeNumber: 'JI-FSO-1024',
+    department: 'Standards & Regulatory Inspection Division',
     jurisdiction: 'North Regional Jurisdiction',
     isGovVerified: true,
     createdAt: '2026-02-10T11:15:00.000Z'
@@ -39,7 +39,7 @@ const DEFAULT_USERS = [
     password: 'Packager@2026',
     name: 'Vikramaditya Roy',
     role: 'packager',
-    roleLabel: 'Brand Packager Compliance Officer',
+    roleLabel: 'Packager',
     badgeNumber: 'MFG-3302',
     department: 'Dabur India Packaging & Metrology Division',
     jurisdiction: 'Industrial Compliance Zone 4',
@@ -54,17 +54,17 @@ export function formatNameFromEmail(identifier) {
   if (clean.toUpperCase().startsWith('MFG-') || clean.toLowerCase().includes('packager')) {
     return `Packager Officer (${clean.toUpperCase()})`;
   }
-  if (clean.toUpperCase().startsWith('SFI-') || clean.toLowerCase().includes('senior')) {
-    return `Senior Food Inspector (${clean.toUpperCase()})`;
+  if (clean.toUpperCase().startsWith('SI-') || clean.toUpperCase().startsWith('SFI-') || clean.toLowerCase().includes('senior')) {
+    return `Senior Inspector (${clean.toUpperCase()})`;
   }
-  if (clean.toUpperCase().startsWith('JFI-') || clean.toLowerCase().includes('junior')) {
-    return `Junior Food Inspector (${clean.toUpperCase()})`;
+  if (clean.toUpperCase().startsWith('JI-') || clean.toUpperCase().startsWith('JFI-') || clean.toLowerCase().includes('junior')) {
+    return `Junior Inspector (${clean.toUpperCase()})`;
   }
   if (clean.toUpperCase().startsWith('LM-') || clean.toLowerCase().includes('inspector')) {
-    return `Senior Food Inspector (${clean.toUpperCase()})`;
+    return `Senior Inspector (${clean.toUpperCase()})`;
   }
   if (clean.toUpperCase().startsWith('FSSAI-') || clean.toLowerCase().includes('fso')) {
-    return `Junior Food Inspector (${clean.toUpperCase()})`;
+    return `Junior Inspector (${clean.toUpperCase()})`;
   }
   const prefix = clean.split('@')[0];
   const parts = prefix.split(/[._\-+]+/).filter(Boolean);
@@ -91,24 +91,24 @@ class AuthDatabase {
 
         // Upgrade any existing legacy accounts
         users = users.map((u) => {
-          if (u.id === 'usr_gov_01' || u.role === 'inspector') {
+          if (u.id === 'usr_gov_01' || u.role === 'inspector' || u.role === 'senior_food_inspector' || u.role === 'senior_inspector') {
             updated = true;
             return {
               ...u,
-              role: 'senior_food_inspector',
-              roleLabel: 'Senior Food Inspector',
-              badgeNumber: u.badgeNumber && !u.badgeNumber.startsWith('SFI-') ? u.badgeNumber.replace('LM-INSP', 'SFI') : u.badgeNumber || 'SFI-DEL-4091',
-              email: u.email || 'senior.food.inspector@lmpc.gov.in'
+              role: 'senior_inspector',
+              roleLabel: 'Senior Inspector',
+              badgeNumber: u.badgeNumber && !u.badgeNumber.startsWith('SI-') ? u.badgeNumber.replace('LM-INSP', 'SI').replace('SFI', 'SI') : u.badgeNumber || 'SI-DEL-4091',
+              email: u.email || 'senior.inspector@lmpc.gov.in'
             };
           }
-          if (u.id === 'usr_gov_02' || u.role === 'fssai') {
+          if (u.id === 'usr_gov_02' || u.role === 'fssai' || u.role === 'junior_food_inspector' || u.role === 'junior_inspector') {
             updated = true;
             return {
               ...u,
-              role: 'junior_food_inspector',
-              roleLabel: 'Junior Food Inspector',
-              badgeNumber: u.badgeNumber && !u.badgeNumber.startsWith('JFI-') ? u.badgeNumber.replace('FSSAI-FSO', 'JFI') : u.badgeNumber || 'JFI-FSO-1024',
-              email: u.email || 'junior.food.inspector@gov.in'
+              role: 'junior_inspector',
+              roleLabel: 'Junior Inspector',
+              badgeNumber: u.badgeNumber && !u.badgeNumber.startsWith('JI-') ? u.badgeNumber.replace('FSSAI-FSO', 'JI').replace('JFI', 'JI') : u.badgeNumber || 'JI-FSO-1024',
+              email: u.email || 'junior.inspector@gov.in'
             };
           }
           return u;
@@ -170,9 +170,9 @@ class AuthDatabase {
       if (name && name.trim()) existing.name = name.trim();
       if (role) {
         existing.role = role;
-        if (role === 'packager') existing.roleLabel = 'Brand Packager Compliance Officer';
-        else if (role === 'junior_food_inspector' || role === 'fssai') existing.roleLabel = 'Junior Food Inspector';
-        else if (role === 'senior_food_inspector' || role === 'inspector') existing.roleLabel = 'Senior Food Inspector';
+        if (role === 'packager') existing.roleLabel = 'Packager';
+        else if (role === 'junior_inspector' || role === 'junior_food_inspector' || role === 'fssai') existing.roleLabel = 'Junior Inspector';
+        else if (role === 'senior_inspector' || role === 'senior_food_inspector' || role === 'inspector') existing.roleLabel = 'Senior Inspector';
       }
       if (password) existing.password = password;
       if (department) existing.department = department;
@@ -183,17 +183,17 @@ class AuthDatabase {
 
     const userName = (name && name.trim()) || formatNameFromEmail(cleanEmail);
 
-    let badgePrefix = 'SFI';
-    let roleTitle = 'Senior Food Inspector';
+    let badgePrefix = 'SI';
+    let roleTitle = 'Senior Inspector';
     let isGovVerified = true;
 
-    if (role === 'junior_food_inspector' || role === 'fssai') {
-      badgePrefix = 'JFI';
-      roleTitle = 'Junior Food Inspector';
+    if (role === 'junior_inspector' || role === 'junior_food_inspector' || role === 'fssai') {
+      badgePrefix = 'JI';
+      roleTitle = 'Junior Inspector';
       isGovVerified = true;
     } else if (role === 'packager') {
       badgePrefix = 'MFG';
-      roleTitle = 'Brand Packager Compliance Officer';
+      roleTitle = 'Packager';
       isGovVerified = true;
     } else if (role === 'citizen') {
       badgePrefix = 'CIVIC';
@@ -209,7 +209,7 @@ class AuthDatabase {
       name: userName,
       email: cleanEmail,
       password: password || 'Default@2026',
-      role: role || 'senior_food_inspector',
+      role: role || 'senior_inspector',
       roleLabel: roleTitle,
       badgeNumber: badgeNumber,
       department: department || (role === 'packager' ? 'Packaging & Manufacturing Compliance Division' : 'Department of Consumer Affairs, Enforcement Circle'),
@@ -238,25 +238,25 @@ class AuthDatabase {
 
     // If account doesn't exist, automatically provision with correct derived name from email or ID
     if (!user) {
-      let role = selectedRole || 'senior_food_inspector';
+      let role = selectedRole || 'senior_inspector';
       const upper = clean.toUpperCase();
       if (upper.startsWith('MFG') || clean.toLowerCase().includes('packager')) {
         role = 'packager';
-      } else if (upper.startsWith('JFI') || upper.startsWith('FSSAI') || clean.toLowerCase().includes('junior') || clean.toLowerCase().includes('fso')) {
-        role = 'junior_food_inspector';
+      } else if (upper.startsWith('JI') || upper.startsWith('JFI') || upper.startsWith('FSSAI') || clean.toLowerCase().includes('junior') || clean.toLowerCase().includes('fso')) {
+        role = 'junior_inspector';
       }
 
-      let badgePrefix = 'SFI';
-      let roleTitle = 'Senior Food Inspector';
+      let badgePrefix = 'SI';
+      let roleTitle = 'Senior Inspector';
       if (role === 'packager') {
         badgePrefix = 'MFG';
-        roleTitle = 'Brand Packager Compliance Officer';
-      } else if (role === 'junior_food_inspector' || role === 'fssai') {
-        badgePrefix = 'JFI';
-        roleTitle = 'Junior Food Inspector';
+        roleTitle = 'Packager';
+      } else if (role === 'junior_inspector' || role === 'junior_food_inspector' || role === 'fssai') {
+        badgePrefix = 'JI';
+        roleTitle = 'Junior Inspector';
       }
 
-      const generatedBadge = (upper.startsWith('MFG-') || upper.startsWith('SFI-') || upper.startsWith('JFI-') || upper.startsWith('LM-') || upper.startsWith('FSSAI-'))
+      const generatedBadge = (upper.startsWith('MFG-') || upper.startsWith('SI-') || upper.startsWith('SFI-') || upper.startsWith('JI-') || upper.startsWith('JFI-') || upper.startsWith('LM-') || upper.startsWith('FSSAI-'))
         ? upper
         : `${badgePrefix}-${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -282,11 +282,11 @@ class AuthDatabase {
       if (selectedRole && user.role !== selectedRole) {
         user.role = selectedRole;
         if (selectedRole === 'packager') {
-          user.roleLabel = 'Brand Packager Compliance Officer';
-        } else if (selectedRole === 'junior_food_inspector' || selectedRole === 'fssai') {
-          user.roleLabel = 'Junior Food Inspector';
-        } else if (selectedRole === 'senior_food_inspector' || selectedRole === 'inspector') {
-          user.roleLabel = 'Senior Food Inspector';
+          user.roleLabel = 'Packager';
+        } else if (selectedRole === 'junior_inspector' || selectedRole === 'junior_food_inspector' || selectedRole === 'fssai') {
+          user.roleLabel = 'Junior Inspector';
+        } else if (selectedRole === 'senior_inspector' || selectedRole === 'senior_food_inspector' || selectedRole === 'inspector') {
+          user.roleLabel = 'Senior Inspector';
         }
       }
       if (password && user.password && user.password !== password) {

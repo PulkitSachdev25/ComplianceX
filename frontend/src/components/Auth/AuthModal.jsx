@@ -56,7 +56,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, initialTab 
   // Register form state
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
-  const [regRole, setRegRole] = useState('senior_food_inspector');
+  const [regRole, setRegRole] = useState('senior_inspector');
   const [regDept, setRegDept] = useState('');
   const [regJurisdiction, setRegJurisdiction] = useState('');
   const [regPassword, setRegPassword] = useState('');
@@ -320,8 +320,8 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, initialTab 
                     value={regRole}
                     onChange={(e) => setRegRole(e.target.value)}
                   >
-                    <option value="senior_food_inspector">Senior Food Inspector</option>
-                    <option value="junior_food_inspector">Junior Food Inspector</option>
+                    <option value="senior_inspector">Senior Inspector</option>
+                    <option value="junior_inspector">Junior Inspector</option>
                     <option value="packager">Packager</option>
                   </select>
                 </div>
