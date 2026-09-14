@@ -9,12 +9,12 @@ const SESSION_TOKEN_KEY = 'lmpc_token';
 const DEFAULT_USERS = [
   {
     id: 'usr_gov_01',
-    email: 'inspector.delhi@lmpc.gov.in',
+    email: 'senior.food.inspector@lmpc.gov.in',
     password: 'Inspector@2026',
     name: 'Sh. Rajeshwar Singh',
-    role: 'inspector',
-    roleLabel: 'Senior Legal Metrology Inspector',
-    badgeNumber: 'LM-INSP-DEL-4091',
+    role: 'senior_food_inspector',
+    roleLabel: 'Senior Food Inspector',
+    badgeNumber: 'SFI-DEL-4091',
     department: 'Department of Consumer Affairs, Delhi Circle',
     jurisdiction: 'NCT of Delhi, Central Zone',
     isGovVerified: true,
@@ -22,13 +22,13 @@ const DEFAULT_USERS = [
   },
   {
     id: 'usr_gov_02',
-    email: 'officer.fssai@gov.in',
-    password: 'FSSAI@2026',
+    email: 'junior.food.inspector@gov.in',
+    password: 'Junior@2026',
     name: 'Dr. Sunita Deshmukh',
-    role: 'fssai',
-    roleLabel: 'FSSAI Central Food Safety Officer',
-    badgeNumber: 'FSSAI-FSO-1024',
-    department: 'FDA Bhawan, Regulatory Vigilance Division',
+    role: 'junior_food_inspector',
+    roleLabel: 'Junior Food Inspector',
+    badgeNumber: 'JFI-FSO-1024',
+    department: 'Food Safety & Standards Inspection Division',
     jurisdiction: 'North Regional Jurisdiction',
     isGovVerified: true,
     createdAt: '2026-02-10T11:15:00.000Z'
@@ -54,11 +54,17 @@ export function formatNameFromEmail(identifier) {
   if (clean.toUpperCase().startsWith('MFG-') || clean.toLowerCase().includes('packager')) {
     return `Packager Officer (${clean.toUpperCase()})`;
   }
+  if (clean.toUpperCase().startsWith('SFI-') || clean.toLowerCase().includes('senior')) {
+    return `Senior Food Inspector (${clean.toUpperCase()})`;
+  }
+  if (clean.toUpperCase().startsWith('JFI-') || clean.toLowerCase().includes('junior')) {
+    return `Junior Food Inspector (${clean.toUpperCase()})`;
+  }
   if (clean.toUpperCase().startsWith('LM-') || clean.toLowerCase().includes('inspector')) {
-    return `Legal Metrology Inspector (${clean.toUpperCase()})`;
+    return `Senior Food Inspector (${clean.toUpperCase()})`;
   }
   if (clean.toUpperCase().startsWith('FSSAI-') || clean.toLowerCase().includes('fso')) {
-    return `Food Safety Officer (${clean.toUpperCase()})`;
+    return `Junior Food Inspector (${clean.toUpperCase()})`;
   }
   const prefix = clean.split('@')[0];
   const parts = prefix.split(/[._\-+]+/).filter(Boolean);
@@ -79,15 +85,42 @@ class AuthDatabase {
       if (!existing) {
         localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(DEFAULT_USERS));
       } else {
-        // Ensure default accounts exist even if DB was modified
-        const users = JSON.parse(existing);
+        // Ensure default accounts exist and are updated to current roles
+        let users = JSON.parse(existing);
         let updated = false;
+
+        // Upgrade any existing legacy accounts
+        users = users.map((u) => {
+          if (u.id === 'usr_gov_01' || u.role === 'inspector') {
+            updated = true;
+            return {
+              ...u,
+              role: 'senior_food_inspector',
+              roleLabel: 'Senior Food Inspector',
+              badgeNumber: u.badgeNumber && !u.badgeNumber.startsWith('SFI-') ? u.badgeNumber.replace('LM-INSP', 'SFI') : u.badgeNumber || 'SFI-DEL-4091',
+              email: u.email || 'senior.food.inspector@lmpc.gov.in'
+            };
+          }
+          if (u.id === 'usr_gov_02' || u.role === 'fssai') {
+            updated = true;
+            return {
+              ...u,
+              role: 'junior_food_inspector',
+              roleLabel: 'Junior Food Inspector',
+              badgeNumber: u.badgeNumber && !u.badgeNumber.startsWith('JFI-') ? u.badgeNumber.replace('FSSAI-FSO', 'JFI') : u.badgeNumber || 'JFI-FSO-1024',
+              email: u.email || 'junior.food.inspector@gov.in'
+            };
+          }
+          return u;
+        });
+
         DEFAULT_USERS.forEach((defaultUser) => {
-          if (!users.some((u) => (u.email || '').toLowerCase() === defaultUser.email.toLowerCase() || (u.badgeNumber || '') === defaultUser.badgeNumber)) {
+          if (!users.some((u) => (u.email || '').toLowerCase() === defaultUser.email.toLowerCase() || (u.badgeNumber || '') === defaultUser.badgeNumber || u.id === defaultUser.id)) {
             users.push(defaultUser);
             updated = true;
           }
         });
+
         if (updated) {
           localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(users));
         }
@@ -138,8 +171,8 @@ class AuthDatabase {
       if (role) {
         existing.role = role;
         if (role === 'packager') existing.roleLabel = 'Brand Packager Compliance Officer';
-        else if (role === 'fssai') existing.roleLabel = 'Food Safety Officer';
-        else if (role === 'inspector') existing.roleLabel = 'Senior Legal Metrology Inspector';
+        else if (role === 'junior_food_inspector' || role === 'fssai') existing.roleLabel = 'Junior Food Inspector';
+        else if (role === 'senior_food_inspector' || role === 'inspector') existing.roleLabel = 'Senior Food Inspector';
       }
       if (password) existing.password = password;
       if (department) existing.department = department;
@@ -150,13 +183,13 @@ class AuthDatabase {
 
     const userName = (name && name.trim()) || formatNameFromEmail(cleanEmail);
 
-    let badgePrefix = 'LM-INSP';
-    let roleTitle = 'Legal Metrology Inspector';
+    let badgePrefix = 'SFI';
+    let roleTitle = 'Senior Food Inspector';
     let isGovVerified = true;
 
-    if (role === 'fssai') {
-      badgePrefix = 'FSSAI-FSO';
-      roleTitle = 'Food Safety Officer';
+    if (role === 'junior_food_inspector' || role === 'fssai') {
+      badgePrefix = 'JFI';
+      roleTitle = 'Junior Food Inspector';
       isGovVerified = true;
     } else if (role === 'packager') {
       badgePrefix = 'MFG';
@@ -176,7 +209,7 @@ class AuthDatabase {
       name: userName,
       email: cleanEmail,
       password: password || 'Default@2026',
-      role: role || 'inspector',
+      role: role || 'senior_food_inspector',
       roleLabel: roleTitle,
       badgeNumber: badgeNumber,
       department: department || (role === 'packager' ? 'Packaging & Manufacturing Compliance Division' : 'Department of Consumer Affairs, Enforcement Circle'),
@@ -205,25 +238,25 @@ class AuthDatabase {
 
     // If account doesn't exist, automatically provision with correct derived name from email or ID
     if (!user) {
-      let role = selectedRole || 'inspector';
+      let role = selectedRole || 'senior_food_inspector';
       const upper = clean.toUpperCase();
       if (upper.startsWith('MFG') || clean.toLowerCase().includes('packager')) {
         role = 'packager';
-      } else if (upper.startsWith('FSSAI') || clean.toLowerCase().includes('fso')) {
-        role = 'fssai';
+      } else if (upper.startsWith('JFI') || upper.startsWith('FSSAI') || clean.toLowerCase().includes('junior') || clean.toLowerCase().includes('fso')) {
+        role = 'junior_food_inspector';
       }
 
-      let badgePrefix = 'LM-INSP';
-      let roleTitle = 'Legal Metrology Inspector';
+      let badgePrefix = 'SFI';
+      let roleTitle = 'Senior Food Inspector';
       if (role === 'packager') {
         badgePrefix = 'MFG';
         roleTitle = 'Brand Packager Compliance Officer';
-      } else if (role === 'fssai') {
-        badgePrefix = 'FSSAI-FSO';
-        roleTitle = 'Food Safety Officer';
+      } else if (role === 'junior_food_inspector' || role === 'fssai') {
+        badgePrefix = 'JFI';
+        roleTitle = 'Junior Food Inspector';
       }
 
-      const generatedBadge = (upper.startsWith('MFG-') || upper.startsWith('LM-') || upper.startsWith('FSSAI-'))
+      const generatedBadge = (upper.startsWith('MFG-') || upper.startsWith('SFI-') || upper.startsWith('JFI-') || upper.startsWith('LM-') || upper.startsWith('FSSAI-'))
         ? upper
         : `${badgePrefix}-${Math.floor(1000 + Math.random() * 9000)}`;
 
@@ -250,10 +283,10 @@ class AuthDatabase {
         user.role = selectedRole;
         if (selectedRole === 'packager') {
           user.roleLabel = 'Brand Packager Compliance Officer';
-        } else if (selectedRole === 'fssai') {
-          user.roleLabel = 'Food Safety Officer';
-        } else if (selectedRole === 'inspector') {
-          user.roleLabel = 'Senior Legal Metrology Inspector';
+        } else if (selectedRole === 'junior_food_inspector' || selectedRole === 'fssai') {
+          user.roleLabel = 'Junior Food Inspector';
+        } else if (selectedRole === 'senior_food_inspector' || selectedRole === 'inspector') {
+          user.roleLabel = 'Senior Food Inspector';
         }
       }
       if (password && user.password && user.password !== password) {

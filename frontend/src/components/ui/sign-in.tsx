@@ -10,13 +10,15 @@ export interface Testimonial {
   text: string;
 }
 
+export type StatutoryRole = 'senior_food_inspector' | 'junior_food_inspector' | 'packager';
+
 interface SignInPageProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
-  onSignIn?: (credentials: { email: string; password: string; role?: 'inspector' | 'fssai' | 'packager' }) => void;
-  onCreateAccount?: (userData: { name: string; email: string; password: string; role: 'inspector' | 'fssai' | 'packager'; department?: string }) => void;
+  onSignIn?: (credentials: { email: string; password: string; role?: StatutoryRole | string }) => void;
+  onCreateAccount?: (userData: { name: string; email: string; password: string; role: StatutoryRole; department?: string }) => void;
   onResetPassword?: () => void;
-  onQuickDemo?: (role: 'inspector' | 'fssai' | 'packager') => void;
+  onQuickDemo?: (role: StatutoryRole) => void;
   errorMessage?: string | null;
   statusMessage?: string | null;
 }
@@ -24,28 +26,28 @@ interface SignInPageProps {
 // Pre-seeded test accounts
 const TEST_ACCOUNTS = [
   {
-    role: 'inspector' as const,
-    roleTitle: 'Senior Legal Metrology Inspector',
+    role: 'senior_food_inspector' as const,
+    roleTitle: 'Senior Food Inspector',
     name: 'Sh. Rajeshwar Singh',
-    id: 'LM-INSP-DEL-4091',
-    email: 'inspector.delhi@lmpc.gov.in',
+    id: 'SFI-DEL-4091',
+    email: 'senior.food.inspector@lmpc.gov.in',
     pass: 'Inspector@2026',
     icon: '🛡️',
     badgeClass: 'text-violet-400 bg-violet-500/10 border-violet-500/30'
   },
   {
-    role: 'fssai' as const,
-    roleTitle: 'FSSAI Food Safety Officer',
+    role: 'junior_food_inspector' as const,
+    roleTitle: 'Junior Food Inspector',
     name: 'Dr. Sunita Deshmukh',
-    id: 'FSSAI-FSO-1024',
-    email: 'officer.fssai@gov.in',
-    pass: 'FSSAI@2026',
+    id: 'JFI-FSO-1024',
+    email: 'junior.food.inspector@gov.in',
+    pass: 'Junior@2026',
     icon: '🔬',
     badgeClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
   },
   {
     role: 'packager' as const,
-    roleTitle: 'Brand Packager Compliance Officer',
+    roleTitle: 'Packager',
     name: 'Vikramaditya Roy',
     id: 'MFG-3302',
     email: 'compliance@dabur.com',
@@ -81,12 +83,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   const [inputDepartment, setInputDepartment] = useState('');
   const [inputIdentifier, setInputIdentifier] = useState('');
   const [inputPassword, setInputPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'inspector' | 'fssai' | 'packager'>('inspector');
+  const [selectedRole, setSelectedRole] = useState<StatutoryRole>('senior_food_inspector');
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleSelectTestAccount = (acc: typeof TEST_ACCOUNTS[number]) => {
     setMode('signin');
-    setInputIdentifier(acc.id); // Autofills with their official ID (e.g. MFG-3302 or LM-INSP-DEL-4091)
+    setInputIdentifier(acc.id); // Autofills with their official ID (e.g. SFI-DEL-4091 or JFI-FSO-1024 or MFG-3302)
     setInputPassword(acc.pass);
     setSelectedRole(acc.role);
     setDropdownOpen(false);
@@ -98,7 +100,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
     }
   };
 
-  const handleRoleNavbarClick = (role: 'inspector' | 'fssai' | 'packager') => {
+  const handleRoleNavbarClick = (role: StatutoryRole) => {
     setSelectedRole(role);
   };
 
@@ -390,38 +392,38 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
               {/* The 3-Option Role Navbar */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-1.5 rounded-2xl bg-[#09090b]/80 border border-[#27272a]">
-                {/* Option 1: Inspector */}
+                {/* Option 1: Senior Food Inspector */}
                 <button
                   type="button"
-                  onClick={() => handleRoleNavbarClick('inspector')}
+                  onClick={() => handleRoleNavbarClick('senior_food_inspector')}
                   className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                    selectedRole === 'inspector'
+                    selectedRole === 'senior_food_inspector'
                       ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30 scale-[1.02] border-violet-400 ring-2 ring-violet-500/40'
                       : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border-transparent hover:border-white/10'
                   }`}
-                  title="Select Legal Metrology Inspector role"
+                  title="Select Senior Food Inspector role"
                 >
                   <Shield className="w-4 h-4" />
-                  <span>1. Inspector</span>
-                  {selectedRole === 'inspector' && (
+                  <span>1. Senior Food Inspector</span>
+                  {selectedRole === 'senior_food_inspector' && (
                     <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-full bg-white/20 font-medium">Selected</span>
                   )}
                 </button>
 
-                {/* Option 2: FSSAI Officer */}
+                {/* Option 2: Junior Food Inspector */}
                 <button
                   type="button"
-                  onClick={() => handleRoleNavbarClick('fssai')}
+                  onClick={() => handleRoleNavbarClick('junior_food_inspector')}
                   className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                    selectedRole === 'fssai'
+                    selectedRole === 'junior_food_inspector'
                       ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 scale-[1.02] border-emerald-400 ring-2 ring-emerald-500/40'
                       : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border-transparent hover:border-white/10'
                   }`}
-                  title="Select FSSAI Food Safety Officer role"
+                  title="Select Junior Food Inspector role"
                 >
                   <HeartPulse className="w-4 h-4" />
-                  <span>2. FSSAI Officer</span>
-                  {selectedRole === 'fssai' && (
+                  <span>2. Junior Food Inspector</span>
+                  {selectedRole === 'junior_food_inspector' && (
                     <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-full bg-white/20 font-medium">Selected</span>
                   )}
                 </button>
@@ -477,7 +479,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 <span>Sign In to Regulatory Portal</span>
               )}
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/20 font-normal">
-                {selectedRole === 'inspector' ? 'as Inspector' : selectedRole === 'fssai' ? 'as FSSAI Officer' : 'as Packager'}
+                {selectedRole === 'senior_food_inspector' ? 'as Senior Food Inspector' : selectedRole === 'junior_food_inspector' ? 'as Junior Food Inspector' : 'as Packager'}
               </span>
             </button>
 

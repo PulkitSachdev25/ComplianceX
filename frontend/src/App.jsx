@@ -86,7 +86,7 @@ export default function App() {
       name,
       email,
       password: password || 'Default@2026',
-      role: role || 'inspector',
+      role: role || 'senior_food_inspector',
       department: department || undefined
     });
 
@@ -100,14 +100,17 @@ export default function App() {
 
   const handleQuickDemo = (role) => {
     setAuthError(null);
-    let email = 'inspector.delhi@lmpc.gov.in';
+    let email = 'senior.food.inspector@lmpc.gov.in';
     let pass = 'Inspector@2026';
-    if (role === 'fssai') {
-      email = 'officer.fssai@gov.in';
-      pass = 'FSSAI@2026';
+    if (role === 'junior_food_inspector' || role === 'fssai') {
+      email = 'junior.food.inspector@gov.in';
+      pass = 'Junior@2026';
     } else if (role === 'packager') {
       email = 'compliance@dabur.com';
       pass = 'Packager@2026';
+    } else if (role === 'senior_food_inspector' || role === 'inspector') {
+      email = 'senior.food.inspector@lmpc.gov.in';
+      pass = 'Inspector@2026';
     }
     const loginRes = authDb.login(email, pass, role);
     if (loginRes.success) {
