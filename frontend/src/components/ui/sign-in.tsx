@@ -94,24 +94,6 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
   const handleRoleNavbarClick = (role: 'inspector' | 'fssai' | 'packager') => {
     setSelectedRole(role);
-    
-    // Autofill with the role's demo account if fields are currently empty
-    let identifier = inputIdentifier;
-    let password = inputPassword;
-    if (!identifier) {
-      const match = TEST_ACCOUNTS.find(a => a.role === role);
-      if (match) {
-        identifier = match.id;
-        password = match.pass;
-        setInputIdentifier(identifier);
-        setInputPassword(password);
-      }
-    }
-
-    // Automatically logs in when clicked as requested
-    if (onSignIn) {
-      onSignIn({ email: identifier, password: password, role });
-    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -257,9 +239,9 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             <div>
               <div className="flex items-center justify-between mb-2.5">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Step 3 • Select Role Navbar (Click to Auto-Log In)
+                  Step 3 • Select Role
                 </label>
-                <span className="text-[11px] text-zinc-400">Click any option to immediately log in</span>
+                <span className="text-[11px] text-violet-400">Click to select role, then Sign In below</span>
               </div>
 
               {/* The 3-Option Role Navbar */}
@@ -268,45 +250,54 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 <button
                   type="button"
                   onClick={() => handleRoleNavbarClick('inspector')}
-                  className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                     selectedRole === 'inspector'
-                      ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30 scale-[1.02]'
-                      : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border border-transparent hover:border-white/10'
+                      ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30 scale-[1.02] border-violet-400 ring-2 ring-violet-500/40'
+                      : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border-transparent hover:border-white/10'
                   }`}
-                  title="Click to automatically log in as Legal Metrology Inspector"
+                  title="Select Legal Metrology Inspector role"
                 >
                   <Shield className="w-4 h-4" />
                   <span>1. Inspector</span>
+                  {selectedRole === 'inspector' && (
+                    <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-full bg-white/20 font-medium">Selected</span>
+                  )}
                 </button>
 
                 {/* Option 2: FSSAI Officer */}
                 <button
                   type="button"
                   onClick={() => handleRoleNavbarClick('fssai')}
-                  className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                     selectedRole === 'fssai'
-                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 scale-[1.02]'
-                      : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border border-transparent hover:border-white/10'
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 scale-[1.02] border-emerald-400 ring-2 ring-emerald-500/40'
+                      : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border-transparent hover:border-white/10'
                   }`}
-                  title="Click to automatically log in as FSSAI Food Safety Officer"
+                  title="Select FSSAI Food Safety Officer role"
                 >
                   <HeartPulse className="w-4 h-4" />
                   <span>2. FSSAI Officer</span>
+                  {selectedRole === 'fssai' && (
+                    <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-full bg-white/20 font-medium">Selected</span>
+                  )}
                 </button>
 
                 {/* Option 3: Brand Packager */}
                 <button
                   type="button"
                   onClick={() => handleRoleNavbarClick('packager')}
-                  className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                     selectedRole === 'packager'
-                      ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 scale-[1.02]'
-                      : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border border-transparent hover:border-white/10'
+                      ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 scale-[1.02] border-amber-400 ring-2 ring-amber-500/40'
+                      : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border-transparent hover:border-white/10'
                   }`}
-                  title="Click to automatically log in as Brand Packager (MFG-3302)"
+                  title="Select Brand Packager (MFG) role"
                 >
                   <Building2 className="w-4 h-4" />
                   <span>3. Packager</span>
+                  {selectedRole === 'packager' && (
+                    <span className="text-[10px] ml-1 px-1.5 py-0.5 rounded-full bg-white/20 font-medium">Selected</span>
+                  )}
                 </button>
               </div>
             </div>
@@ -329,9 +320,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             {/* Main Submit Button */}
             <button 
               type="submit" 
-              className="w-full rounded-2xl bg-primary py-4 font-semibold text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer shadow-xl active:scale-[0.99] text-sm mt-2 tracking-wide"
+              className="w-full rounded-2xl bg-primary py-4 font-semibold text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer shadow-xl active:scale-[0.99] text-sm mt-2 tracking-wide flex items-center justify-center gap-2"
             >
-              Sign In to Regulatory Portal
+              <span>Sign In to Regulatory Portal</span>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-white/20 font-normal">
+                {selectedRole === 'inspector' ? 'as Inspector' : selectedRole === 'fssai' ? 'as FSSAI Officer' : 'as Packager'}
+              </span>
             </button>
           </form>
         </div>
