@@ -68,6 +68,36 @@ export default function App() {
     setAuthStatus('Password reset instructions have been dispatched to your email address.');
   };
 
+  const handleCreateAccount = (userData) => {
+    setAuthError(null);
+    setAuthStatus(null);
+    const { name, email, password, role, department } = userData || {};
+
+    if (!email) {
+      setAuthError('Email address or Officer / Packager ID is required.');
+      return;
+    }
+    if (!name) {
+      setAuthError('Full Name is required to register an official account.');
+      return;
+    }
+
+    const res = authDb.registerUser({
+      name,
+      email,
+      password: password || 'Default@2026',
+      role: role || 'inspector',
+      department: department || undefined
+    });
+
+    if (res.success) {
+      sessionStorage.setItem('lmpc_session_active', 'true');
+      setCurrentUser(res.user);
+    } else {
+      setAuthError(res.error || 'Failed to create account.');
+    }
+  };
+
   const handleQuickDemo = (role) => {
     setAuthError(null);
     let email = 'inspector.delhi@lmpc.gov.in';
@@ -102,6 +132,7 @@ export default function App() {
     return (
       <SignInPage
         onSignIn={handleSignIn}
+        onCreateAccount={handleCreateAccount}
         onResetPassword={handleResetPassword}
         onQuickDemo={handleQuickDemo}
         errorMessage={authError}

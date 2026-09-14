@@ -134,6 +134,17 @@ class AuthDatabase {
     const cleanEmail = email.toLowerCase().trim();
     const existing = this.findUserByIdOrEmail(cleanEmail);
     if (existing) {
+      if (name && name.trim()) existing.name = name.trim();
+      if (role) {
+        existing.role = role;
+        if (role === 'packager') existing.roleLabel = 'Brand Packager Compliance Officer';
+        else if (role === 'fssai') existing.roleLabel = 'Food Safety Officer';
+        else if (role === 'inspector') existing.roleLabel = 'Senior Legal Metrology Inspector';
+      }
+      if (password) existing.password = password;
+      if (department) existing.department = department;
+      const users = this.getUsers().map((u) => u.id === existing.id ? existing : u);
+      localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(users));
       return { success: true, user: existing };
     }
 
