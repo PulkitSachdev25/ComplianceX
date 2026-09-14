@@ -225,41 +225,6 @@ body {
   letter-spacing: 0.05em;
 }
 
-/* Mode Navigation Toggle */
-.mode-toggle-group {
-  display: flex;
-  background-color: var(--primary-navy-dark);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  padding: 3px;
-}
-
-.mode-toggle-btn {
-  padding: 0.5rem 1.1rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: none;
-  background: transparent;
-  color: #CBD5E0;
-  cursor: pointer;
-  border-radius: 2px;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.15s ease;
-}
-
-.mode-toggle-btn.active {
-  background-color: #FFFFFF;
-  color: var(--primary-navy);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.mode-toggle-btn:hover:not(.active) {
-  color: #FFFFFF;
-  background-color: rgba(255, 255, 255, 0.08);
-}
-
 /* Civic Section Banner */
 .civic-section-banner {
   background-color: #FFFFFF;
@@ -526,12 +491,5 @@ body {
   .gov-header-inner {
     flex-direction: column;
     align-items: flex-start;
-  }
-  .mode-toggle-group {
-    width: 100%;
-  }
-  .mode-toggle-btn {
-    flex: 1;
-    justify-content: center;
   }
 }

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
-import CitizenMode from './components/CitizenView/CitizenMode';
 import InspectorMode from './components/InspectorView/InspectorMode';
 import OfflineQueueModal from './components/InspectorView/OfflineQueueModal';
 import AnimatedList from './AnimatedList';
@@ -9,7 +8,6 @@ import { authDb } from './utils/authDb';
 import { SignInPage } from './components/ui/sign-in';
 
 export default function App() {
-  const [currentMode, setCurrentMode] = useState('inspector'); // default to inspector
   const [offlineModalOpen, setOfflineModalOpen] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [authStatus, setAuthStatus] = useState(null);
@@ -146,20 +144,14 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-slate)' }}>
-      {/* Official Civic Header with GooeyNav */}
+      {/* Official Civic Header */}
       <Header
-        currentMode={currentMode}
-        onModeChange={(mode) => setCurrentMode(mode)}
         onOpenOfflineQueue={() => setOfflineModalOpen(true)}
       />
 
       {/* Main Mode View */}
       <main style={{ flex: 1 }}>
-        {currentMode === 'citizen' ? (
-          <CitizenMode currentUser={currentUser} />
-        ) : (
-          <InspectorMode currentUser={currentUser} />
-        )}
+        <InspectorMode currentUser={currentUser} />
 
         {/* Live Statutory Checklist using AnimatedList */}
         <section style={{ maxWidth: '1280px', margin: '2.5rem auto 1rem', padding: '0 1rem', width: '100%' }}>

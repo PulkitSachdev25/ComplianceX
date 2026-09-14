@@ -9,7 +9,7 @@ import PillNav from '../PillNav';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 import shieldLogo from '../assets/lmpc_shield_logo.png';
 
-export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, onAuthModalToggle }) {
+export default function Header({ onOpenOfflineQueue, onAuthModalToggle }) {
   const [currentUser, setCurrentUser] = useState(() => authDb.getCurrentUser());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queuedCount, setQueuedCount] = useState(0);
@@ -74,19 +74,10 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
 
   const navItems = [
     {
-      label: "Citizen Mode",
-      href: "#citizen",
-      onClick: (e) => {
-        if (e) e.preventDefault();
-        onModeChange('citizen');
-      }
-    },
-    {
-      label: "Inspector Mode",
+      label: "Legal Metrology Audit",
       href: "#inspector",
       onClick: (e) => {
         if (e) e.preventDefault();
-        onModeChange('inspector');
       }
     },
     {
@@ -315,13 +306,30 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
                 </span>
               </div>
               <p style={{ margin: '0.2rem 0 0', fontSize: '0.725rem', color: '#CBD5E0', letterSpacing: '0.03em' }}>
-                Ministry of Consumer Affairs, Food & Public Distribution • Legal Metrology & FSSAI Division
+                Department of Consumer Affairs • Ministry of Consumer Affairs, Food & Public Distribution
               </p>
             </div>
           </div>
 
-          {/* Civic Mode PillNav Switcher */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          {/* Civic Header Right Side: Statutory Badge & PillNav */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+            <span className="civic-badge badge-compliant" style={{
+              backgroundColor: 'rgba(56, 225, 217, 0.12)',
+              border: '1px solid rgba(56, 225, 217, 0.35)',
+              color: '#38E1D9',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              letterSpacing: '0.03em',
+              padding: '0.35rem 0.75rem',
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem'
+            }}>
+              <Shield size={13} color="#38E1D9" />
+              Statutory Enforcement Division (Sec 36(1))
+            </span>
+
             <PillNav
               logo={
                 <img
@@ -332,7 +340,7 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
               }
               logoAlt="LMPC Vision Logo"
               items={navItems}
-              activeHref={currentMode === 'citizen' ? '#citizen' : '#inspector'}
+              activeHref="#inspector"
               baseColor="#CBD5E0"
               pillColor="#0A192F"
               hoveredPillTextColor="#1A365D"
@@ -348,11 +356,6 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
         onClose={() => setAuthModalOpen(false)}
         onLoginSuccess={(user) => {
           setCurrentUser(user);
-          if (user.role === 'senior_inspector' || user.role === 'junior_inspector' || user.role === 'senior_food_inspector' || user.role === 'junior_food_inspector' || user.role === 'inspector' || user.role === 'fssai') {
-            onModeChange('inspector');
-          } else {
-            onModeChange('citizen');
-          }
         }}
       />
 
