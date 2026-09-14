@@ -20,6 +20,7 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
 
   const handleLogout = () => {
+    sessionStorage.removeItem('lmpc_session_active');
     authDb.logout();
     setCurrentUser(null);
   };
@@ -32,7 +33,8 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
     window.addEventListener('offline', handleOffline);
 
     const checkAuth = () => {
-      const u = authDb.getCurrentUser();
+      const active = sessionStorage.getItem('lmpc_session_active');
+      const u = active ? authDb.getCurrentUser() : null;
       setCurrentUser(u);
       const b = u?.badgeNumber || 'LM-INSP-DEL-4091';
       setHistoryCount(scanHistory.getHistoryByOfficer(b).length);

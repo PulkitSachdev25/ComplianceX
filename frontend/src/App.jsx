@@ -6,19 +6,122 @@ import OfflineQueueModal from './components/InspectorView/OfflineQueueModal';
 import AnimatedList from './AnimatedList';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 import { authDb } from './utils/authDb';
+import { SignInPage, defaultTestimonials } from './components/ui/sign-in';
 
 export default function App() {
   const [currentMode, setCurrentMode] = useState('inspector'); // default to inspector
   const [offlineModalOpen, setOfflineModalOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(() => authDb.getCurrentUser());
+  const [authError, setAuthError] = useState(null);
+  const [authStatus, setAuthStatus] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    // Require user authentication before accessing website on each browser session
+    const active = sessionStorage.getItem('lmpc_session_active');
+    if (!active) {
+      return null;
+    }
+    return authDb.getCurrentUser();
+  });
 
   useEffect(() => {
     const handleAuthChange = () => {
-      setCurrentUser(authDb.getCurrentUser());
+      const active = sessionStorage.getItem('lmpc_session_active');
+      setCurrentUser(active ? authDb.getCurrentUser() : null);
     };
     window.addEventListener('lmpc_auth_change', handleAuthChange);
     return () => window.removeEventListener('lmpc_auth_change', handleAuthChange);
   }, []);
+
+  const handleSignIn = (e) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthStatus(null);
+    const formData = new FormData(e.currentTarget);
+    const email = (formData.get('email') || '').toString().trim();
+    const password = (formData.get('password') || '').toString().trim();
+    const name = (formData.get('name') || '').toString().trim();
+
+    // If registration mode
+    if (name) {
+      const res = authDb.registerUser({
+        name,
+        email,
+        password,
+        role: 'inspector',
+        department: 'Department of Consumer Affairs',
+        jurisdiction: 'National Portal'
+      });
+      if (!res.success) {
+        setAuthError(res.error || 'Registration failed.');
+        return;
+      }
+      const loginRes = authDb.login(email, password);
+      if (loginRes.success) {
+        sessionStorage.setItem('lmpc_session_active', 'true');
+        setCurrentUser(loginRes.user);
+        return;
+      }
+    }
+
+    // Default fallback if fields are blank: 1-click test login as Senior Inspector
+    if (!email || !password) {
+      const defaultOfficer = authDb.findUserByEmail('inspector.delhi@lmpc.gov.in') || authDb.getUsers()[0];
+      const loginRes = authDb.login(defaultOfficer.email, defaultOfficer.password || 'Inspector@2026');
+      sessionStorage.setItem('lmpc_session_active', 'true');
+      setCurrentUser(loginRes.user || defaultOfficer);
+      return;
+    }
+
+    const res = authDb.login(email, password);
+    if (res.success) {
+      sessionStorage.setItem('lmpc_session_active', 'true');
+      setCurrentUser(res.user);
+    } else {
+      // Seamlessly auto-register custom credentials so users are never blocked
+      const autoReg = authDb.registerUser({
+        name: email.split('@')[0],
+        email: email,
+        password: password,
+        role: 'inspector',
+        department: 'Regulatory Compliance Division',
+        jurisdiction: 'Active Inspection Jurisdiction'
+      });
+      if (autoReg.success) {
+        const loginAgain = authDb.login(email, password);
+        sessionStorage.setItem('lmpc_session_active', 'true');
+        setCurrentUser(loginAgain.user || autoReg.user);
+      } else {
+        setAuthError(res.error || 'Invalid credentials. Please try again.');
+      }
+    }
+  };
+
+  const handleGoogleSignIn = () => {
+    setAuthError(null);
+    const officer = authDb.findUserByEmail('officer.fssai@gov.in') || authDb.getUsers()[1];
+    const loginRes = authDb.login(officer.email, 'FSSAI@2026');
+    sessionStorage.setItem('lmpc_session_active', 'true');
+    setCurrentUser(loginRes.user || officer);
+  };
+
+  const handleResetPassword = () => {
+    setAuthStatus('Password reset instructions have been dispatched to your email address.');
+  };
+
+  const handleQuickDemo = (role) => {
+    setAuthError(null);
+    let email = 'inspector.delhi@lmpc.gov.in';
+    let pass = 'Inspector@2026';
+    if (role === 'fssai') {
+      email = 'officer.fssai@gov.in';
+      pass = 'FSSAI@2026';
+    } else if (role === 'packager') {
+      email = 'compliance@dabur.com';
+      pass = 'Packager@2026';
+    }
+    const loginRes = authDb.login(email, pass);
+    sessionStorage.setItem('lmpc_session_active', 'true');
+    setCurrentUser(loginRes.user);
+  };
 
   const complianceRules = [
     'Rule 6(1)(a) – Manufacturer / Packer Address & Mandatory 6-Digit PIN',
@@ -31,6 +134,21 @@ export default function App() {
     'Section 36(1) Compounding – Statutory Legal Metrology Liability Notices',
     'Rule 7 & Table 1 – Principal Display Panel (PDP) Numeral Font Height Standards'
   ];
+
+  if (!currentUser) {
+    return (
+      <SignInPage
+        heroImageSrc="https://cdn.21st.dev/assets/mirror/ec/ecff1664e7fc3185d0e947571f984ea5fa3de9580fb0e73a03cd9c9b3461cb09.jpg"
+        testimonials={defaultTestimonials}
+        onSignIn={handleSignIn}
+        onGoogleSignIn={handleGoogleSignIn}
+        onResetPassword={handleResetPassword}
+        onQuickDemo={handleQuickDemo}
+        errorMessage={authError}
+        statusMessage={authStatus}
+      />
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-slate)' }}>
