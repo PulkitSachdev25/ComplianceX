@@ -36,23 +36,26 @@ export default function App() {
     setAuthStatus(null);
     let email = '';
     let password = '';
+    let role = undefined;
 
     if (credentials && typeof credentials === 'object' && credentials.email !== undefined) {
       email = (credentials.email || '').trim();
       password = (credentials.password || '').trim();
+      role = credentials.role;
     } else if (credentials && credentials.currentTarget) {
       credentials.preventDefault();
       const formData = new FormData(credentials.currentTarget);
       email = (formData.get('email') || '').toString().trim();
       password = (formData.get('password') || '').toString().trim();
+      role = formData.get('role') || undefined;
     }
 
     if (!email) {
-      setAuthError('Please enter your email address.');
+      setAuthError('Please enter your email address or Officer / Packager ID.');
       return;
     }
 
-    const res = authDb.login(email, password);
+    const res = authDb.login(email, password, role);
     if (res.success) {
       sessionStorage.setItem('lmpc_session_active', 'true');
       setCurrentUser(res.user);
@@ -76,7 +79,7 @@ export default function App() {
       email = 'compliance@dabur.com';
       pass = 'Packager@2026';
     }
-    const loginRes = authDb.login(email, pass);
+    const loginRes = authDb.login(email, pass, role);
     if (loginRes.success) {
       sessionStorage.setItem('lmpc_session_active', 'true');
       setCurrentUser(loginRes.user);

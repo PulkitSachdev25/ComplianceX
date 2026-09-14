@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, ShieldCheck, Zap } from 'lucide-react';
+import { Eye, EyeOff, ShieldCheck, Zap, ChevronDown, Check, Building2, Shield, HeartPulse, User } from 'lucide-react';
 
 // --- TYPE DEFINITIONS ---
 
@@ -13,12 +13,46 @@ export interface Testimonial {
 interface SignInPageProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
-  onSignIn?: (credentials: { email: string; password: string }) => void;
+  onSignIn?: (credentials: { email: string; password: string; role?: 'inspector' | 'fssai' | 'packager' }) => void;
   onResetPassword?: () => void;
   onQuickDemo?: (role: 'inspector' | 'fssai' | 'packager') => void;
   errorMessage?: string | null;
   statusMessage?: string | null;
 }
+
+// Pre-seeded test accounts
+const TEST_ACCOUNTS = [
+  {
+    role: 'inspector' as const,
+    roleTitle: 'Senior Legal Metrology Inspector',
+    name: 'Sh. Rajeshwar Singh',
+    id: 'LM-INSP-DEL-4091',
+    email: 'inspector.delhi@lmpc.gov.in',
+    pass: 'Inspector@2026',
+    icon: '🛡️',
+    badgeClass: 'text-violet-400 bg-violet-500/10 border-violet-500/30'
+  },
+  {
+    role: 'fssai' as const,
+    roleTitle: 'FSSAI Food Safety Officer',
+    name: 'Dr. Sunita Deshmukh',
+    id: 'FSSAI-FSO-1024',
+    email: 'officer.fssai@gov.in',
+    pass: 'FSSAI@2026',
+    icon: '🔬',
+    badgeClass: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
+  },
+  {
+    role: 'packager' as const,
+    roleTitle: 'Brand Packager Compliance Officer',
+    name: 'Vikramaditya Roy',
+    id: 'MFG-3302',
+    email: 'compliance@dabur.com',
+    pass: 'Packager@2026',
+    icon: '📦',
+    badgeClass: 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+  }
+];
 
 // --- SUB-COMPONENTS ---
 
@@ -32,7 +66,7 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 
 export const SignInPage: React.FC<SignInPageProps> = ({
   title = <span className="font-light text-foreground tracking-tighter">Welcome</span>,
-  description = "Access your account and continue your journey with us",
+  description = "Access your statutory account and continue regulatory & packaging compliance operations",
   onSignIn,
   onResetPassword,
   onQuickDemo,
@@ -40,123 +74,162 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   statusMessage,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const [inputEmail, setInputEmail] = useState('');
+  const [inputIdentifier, setInputIdentifier] = useState('');
   const [inputPassword, setInputPassword] = useState('');
+  const [selectedRole, setSelectedRole] = useState<'inspector' | 'fssai' | 'packager'>('inspector');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const handleDemoClick = (role: 'inspector' | 'fssai' | 'packager') => {
-    let email = 'inspector.delhi@lmpc.gov.in';
-    let pass = 'Inspector@2026';
-    if (role === 'fssai') {
-      email = 'officer.fssai@gov.in';
-      pass = 'FSSAI@2026';
-    } else if (role === 'packager') {
-      email = 'compliance@dabur.com';
-      pass = 'Packager@2026';
-    }
-    setInputEmail(email);
-    setInputPassword(pass);
+  const handleSelectTestAccount = (acc: typeof TEST_ACCOUNTS[number]) => {
+    setInputIdentifier(acc.id); // Autofills with their official ID (e.g. MFG-3302 or LM-INSP-DEL-4091)
+    setInputPassword(acc.pass);
+    setSelectedRole(acc.role);
+    setDropdownOpen(false);
+
     if (onQuickDemo) {
-      onQuickDemo(role);
+      onQuickDemo(acc.role);
+    } else if (onSignIn) {
+      onSignIn({ email: acc.id, password: acc.pass, role: acc.role });
+    }
+  };
+
+  const handleRoleNavbarClick = (role: 'inspector' | 'fssai' | 'packager') => {
+    setSelectedRole(role);
+    
+    // Autofill with the role's demo account if fields are currently empty
+    let identifier = inputIdentifier;
+    let password = inputPassword;
+    if (!identifier) {
+      const match = TEST_ACCOUNTS.find(a => a.role === role);
+      if (match) {
+        identifier = match.id;
+        password = match.pass;
+        setInputIdentifier(identifier);
+        setInputPassword(password);
+      }
+    }
+
+    // Automatically logs in when clicked as requested
+    if (onSignIn) {
+      onSignIn({ email: identifier, password: password, role });
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (onSignIn) {
-      onSignIn({ email: inputEmail, password: inputPassword });
+      onSignIn({ email: inputIdentifier, password: inputPassword, role: selectedRole });
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 bg-background text-foreground selection:bg-violet-500/30 overflow-y-auto">
-      {/* Centered Sign-In Card without side hero or external items */}
-      <div className="w-full max-w-md bg-[#121215] border border-border rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden backdrop-blur-xl my-auto">
-        {/* Subtle Ambient Glow */}
-        <div className="absolute -top-20 -left-20 w-44 h-44 bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -right-20 w-44 h-44 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-10 bg-background text-foreground selection:bg-violet-500/30 overflow-y-auto">
+      {/* Spacious, Wide Sign-In Card (max-w-3xl) to eliminate clustering */}
+      <div className="w-full max-w-3xl bg-[#121215] border border-[#27272a] rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden backdrop-blur-xl my-6">
+        {/* Subtle Ambient Radial Glows */}
+        <div className="absolute -top-32 -left-32 w-64 h-64 bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 w-64 h-64 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col gap-5">
-          {/* Header */}
-          <div>
-            <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
-              {title}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-2">
-              {description}
-            </p>
+        <div className="relative z-10 flex flex-col gap-7">
+          {/* Header & Test Account Dropdown Header Row */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#27272a] pb-6">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight">
+                {title}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-2 max-w-xl">
+                {description}
+              </p>
+            </div>
+
+            {/* Test Accounts Dropdown with ChevronDown Arrow */}
+            <div className="relative shrink-0">
+              <button
+                type="button"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-violet-950/40 hover:bg-violet-900/50 border border-violet-500/40 text-violet-200 text-xs font-semibold transition-all cursor-pointer shadow-md hover:border-violet-400 active:scale-95"
+                title="Select from pre-configured test accounts"
+              >
+                <Zap className="w-4 h-4 text-violet-400 shrink-0" />
+                <span>Quick Test Accounts</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Dropdown Menu Options */}
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-[#18181c] border border-[#2e2e34] rounded-2xl shadow-2xl p-2 z-50 animate-element">
+                  <div className="px-3 py-1.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-800">
+                    Select Account (Auto-Fill & Log In)
+                  </div>
+                  <div className="space-y-1 mt-1">
+                    {TEST_ACCOUNTS.map((acc) => (
+                      <button
+                        key={acc.role}
+                        type="button"
+                        onClick={() => handleSelectTestAccount(acc)}
+                        className="w-full text-left p-2.5 rounded-xl hover:bg-white/10 transition-colors flex items-start gap-3 cursor-pointer group"
+                      >
+                        <span className="text-lg mt-0.5">{acc.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium text-white flex items-center justify-between">
+                            <span className="truncate">{acc.name}</span>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-md border font-mono ${acc.badgeClass}`}>
+                              {acc.id}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-zinc-400 truncate">{acc.roleTitle}</div>
+                          <div className="text-[10px] text-zinc-500 font-mono truncate">{acc.email}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Prominent Test Login / 1-Click Demo Bar */}
-          <div className="rounded-2xl bg-gradient-to-r from-violet-950/40 via-purple-900/25 to-indigo-950/40 border border-violet-500/30 p-3.5 shadow-md">
-            <div className="flex items-center justify-between text-xs font-semibold text-violet-300 mb-2">
-              <span className="flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-violet-400" />
-                <span>Test Login / Demo Bar</span>
-              </span>
-              <span className="text-[10px] text-zinc-400 font-normal">Click any role to test</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleDemoClick('inspector')}
-                className="py-2 px-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/40 border border-violet-400/30 text-xs font-medium text-violet-200 transition-all text-center cursor-pointer active:scale-95 shadow-sm truncate"
-                title="Login as Senior Inspector Sh. Rajeshwar Singh"
-              >
-                Senior Inspector
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoClick('fssai')}
-                className="py-2 px-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/40 border border-emerald-400/30 text-xs font-medium text-emerald-200 transition-all text-center cursor-pointer active:scale-95 shadow-sm truncate"
-                title="Login as Food Safety Officer Dr. Sunita Deshmukh"
-              >
-                FSSAI Officer
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoClick('packager')}
-                className="py-2 px-2 rounded-xl bg-amber-600/20 hover:bg-amber-600/40 border border-amber-400/30 text-xs font-medium text-amber-200 transition-all text-center cursor-pointer active:scale-95 shadow-sm truncate"
-                title="Login as Brand Packager Vikramaditya Roy"
-              >
-                Packager
-              </button>
-            </div>
-          </div>
-
-          {/* Feedback Messages */}
+          {/* Feedback Notifications */}
           {errorMessage && (
-            <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2.5">
               <span>⚠️</span>
               <span>{errorMessage}</span>
             </div>
           )}
 
           {statusMessage && (
-            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
+            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm flex items-center gap-2.5">
               <span>✅</span>
               <span>{statusMessage}</span>
             </div>
           )}
 
-          {/* Working Email and Password Form */}
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          {/* Form */}
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Step 1: Email or Officer/Packager ID */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-1.5">Email Address</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Step 1 • Email Address or Officer / Packager ID
+                </label>
+                <span className="text-[11px] text-violet-400">Packager IDs (e.g. MFG-3302) supported</span>
+              </div>
               <GlassInputWrapper>
                 <input 
                   name="email" 
-                  type="email" 
+                  type="text" 
                   required 
-                  value={inputEmail} 
-                  onChange={(e) => setInputEmail(e.target.value)}
-                  placeholder="Enter your email address" 
-                  className="w-full bg-transparent text-sm p-3.5 rounded-2xl focus:outline-none text-foreground placeholder:text-muted-foreground/60" 
+                  value={inputIdentifier} 
+                  onChange={(e) => setInputIdentifier(e.target.value)}
+                  placeholder="Enter your email or ID (e.g. compliance@dabur.com or MFG-3302)" 
+                  className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-foreground placeholder:text-muted-foreground/60" 
                 />
               </GlassInputWrapper>
             </div>
 
+            {/* Step 2: Password */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-1.5">Password</label>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-2">
+                Step 2 • Password
+              </label>
               <GlassInputWrapper>
                 <div className="relative">
                   <input 
@@ -165,23 +238,82 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                     required 
                     value={inputPassword} 
                     onChange={(e) => setInputPassword(e.target.value)}
-                    placeholder="Enter your password" 
-                    className="w-full bg-transparent text-sm p-3.5 pr-12 rounded-2xl focus:outline-none text-foreground placeholder:text-muted-foreground/60" 
+                    placeholder="Enter your statutory account password" 
+                    className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none text-foreground placeholder:text-muted-foreground/60" 
                   />
                   <button 
                     type="button" 
                     onClick={() => setShowPassword(!showPassword)} 
-                    className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground transition-colors p-1"
+                    className="absolute inset-y-0 right-3.5 flex items-center text-muted-foreground hover:text-foreground transition-colors p-1"
                     title={showPassword ? "Hide password" : "Show password"}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </GlassInputWrapper>
             </div>
 
+            {/* Step 3: Navbar of Three Role Options (Inspector, FSSAI, Packager) */}
+            <div>
+              <div className="flex items-center justify-between mb-2.5">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Step 3 • Select Role Navbar (Click to Auto-Log In)
+                </label>
+                <span className="text-[11px] text-zinc-400">Click any option to immediately log in</span>
+              </div>
+
+              {/* The 3-Option Role Navbar */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-1.5 rounded-2xl bg-[#09090b]/80 border border-[#27272a]">
+                {/* Option 1: Inspector */}
+                <button
+                  type="button"
+                  onClick={() => handleRoleNavbarClick('inspector')}
+                  className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    selectedRole === 'inspector'
+                      ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30 scale-[1.02]'
+                      : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border border-transparent hover:border-white/10'
+                  }`}
+                  title="Click to automatically log in as Legal Metrology Inspector"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>1. Inspector</span>
+                </button>
+
+                {/* Option 2: FSSAI Officer */}
+                <button
+                  type="button"
+                  onClick={() => handleRoleNavbarClick('fssai')}
+                  className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    selectedRole === 'fssai'
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 scale-[1.02]'
+                      : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border border-transparent hover:border-white/10'
+                  }`}
+                  title="Click to automatically log in as FSSAI Food Safety Officer"
+                >
+                  <HeartPulse className="w-4 h-4" />
+                  <span>2. FSSAI Officer</span>
+                </button>
+
+                {/* Option 3: Brand Packager */}
+                <button
+                  type="button"
+                  onClick={() => handleRoleNavbarClick('packager')}
+                  className={`flex items-center justify-center gap-2.5 p-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    selectedRole === 'packager'
+                      ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 scale-[1.02]'
+                      : 'bg-white/[0.03] hover:bg-white/[0.08] text-zinc-300 border border-transparent hover:border-white/10'
+                  }`}
+                  title="Click to automatically log in as Brand Packager (MFG-3302)"
+                >
+                  <Building2 className="w-4 h-4" />
+                  <span>3. Packager</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Remember Me & Reset Password Controls */}
             <div className="flex items-center justify-between text-xs pt-1">
-              <label className="flex items-center gap-2.5 cursor-pointer">
+              <label className="flex items-center gap-3 cursor-pointer">
                 <input type="checkbox" name="rememberMe" defaultChecked className="custom-checkbox" />
                 <span className="text-foreground/80">Keep me signed in</span>
               </label>
@@ -194,11 +326,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               </a>
             </div>
 
+            {/* Main Submit Button */}
             <button 
               type="submit" 
-              className="w-full rounded-2xl bg-primary py-3.5 font-medium text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer shadow-lg active:scale-[0.99] text-sm mt-2"
+              className="w-full rounded-2xl bg-primary py-4 font-semibold text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer shadow-xl active:scale-[0.99] text-sm mt-2 tracking-wide"
             >
-              Sign In
+              Sign In to Regulatory Portal
             </button>
           </form>
         </div>

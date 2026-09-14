@@ -48,11 +48,21 @@ const DEFAULT_USERS = [
   }
 ];
 
-export function formatNameFromEmail(email) {
-  if (!email) return 'Authorized Officer';
-  const prefix = email.split('@')[0];
+export function formatNameFromEmail(identifier) {
+  if (!identifier) return 'Authorized Officer';
+  const clean = identifier.trim();
+  if (clean.toUpperCase().startsWith('MFG-') || clean.toLowerCase().includes('packager')) {
+    return `Packager Officer (${clean.toUpperCase()})`;
+  }
+  if (clean.toUpperCase().startsWith('LM-') || clean.toLowerCase().includes('inspector')) {
+    return `Legal Metrology Inspector (${clean.toUpperCase()})`;
+  }
+  if (clean.toUpperCase().startsWith('FSSAI-') || clean.toLowerCase().includes('fso')) {
+    return `Food Safety Officer (${clean.toUpperCase()})`;
+  }
+  const prefix = clean.split('@')[0];
   const parts = prefix.split(/[._\-+]+/).filter(Boolean);
-  if (parts.length === 0) return prefix;
+  if (parts.length === 0) return clean;
   return parts
     .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
     .join(' ');
@@ -73,7 +83,7 @@ class AuthDatabase {
         const users = JSON.parse(existing);
         let updated = false;
         DEFAULT_USERS.forEach((defaultUser) => {
-          if (!users.some((u) => u.email.toLowerCase() === defaultUser.email.toLowerCase())) {
+          if (!users.some((u) => (u.email || '').toLowerCase() === defaultUser.email.toLowerCase() || (u.badgeNumber || '') === defaultUser.badgeNumber)) {
             users.push(defaultUser);
             updated = true;
           }
@@ -99,18 +109,32 @@ class AuthDatabase {
   findUserByEmail(email) {
     if (!email) return null;
     const users = this.getUsers();
-    return users.find((u) => u.email.toLowerCase().trim() === email.toLowerCase().trim()) || null;
+    return users.find((u) => (u.email || '').toLowerCase().trim() === email.toLowerCase().trim()) || null;
+  }
+
+  findUserByIdOrEmail(identifier) {
+    if (!identifier) return null;
+    const clean = identifier.toLowerCase().trim();
+    const users = this.getUsers();
+    return (
+      users.find((u) => {
+        const uEmail = (u.email || '').toLowerCase().trim();
+        const uBadge = (u.badgeNumber || '').toLowerCase().trim();
+        const uId = (u.id || '').toLowerCase().trim();
+        return uEmail === clean || uBadge === clean || uId === clean;
+      }) || null
+    );
   }
 
   registerUser({ name, email, password, role, department, jurisdiction }) {
     if (!email) {
-      return { success: false, error: 'Email is required.' };
+      return { success: false, error: 'Email or ID is required.' };
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    const existing = this.findUserByEmail(cleanEmail);
+    const existing = this.findUserByIdOrEmail(cleanEmail);
     if (existing) {
-      return { success: false, error: 'An account with this email address already exists.' };
+      return { success: true, user: existing };
     }
 
     const userName = (name && name.trim()) || formatNameFromEmail(cleanEmail);
@@ -125,7 +149,7 @@ class AuthDatabase {
       isGovVerified = true;
     } else if (role === 'packager') {
       badgePrefix = 'MFG';
-      roleTitle = 'Packaging Compliance Officer';
+      roleTitle = 'Brand Packager Compliance Officer';
       isGovVerified = true;
     } else if (role === 'citizen') {
       badgePrefix = 'CIVIC';
@@ -144,7 +168,7 @@ class AuthDatabase {
       role: role || 'inspector',
       roleLabel: roleTitle,
       badgeNumber: badgeNumber,
-      department: department || 'Department of Consumer Affairs, Enforcement Circle',
+      department: department || (role === 'packager' ? 'Packaging & Manufacturing Compliance Division' : 'Department of Consumer Affairs, Enforcement Circle'),
       jurisdiction: jurisdiction || 'Active Inspection Jurisdiction',
       isGovVerified: isGovVerified,
       createdAt: new Date().toISOString()
@@ -160,38 +184,75 @@ class AuthDatabase {
     }
   }
 
-  login(email, password) {
-    if (!email) {
-      return { success: false, error: 'Please enter your email address.' };
+  login(identifier, password, selectedRole) {
+    if (!identifier) {
+      return { success: false, error: 'Please enter your email or officer / packager ID.' };
     }
 
-    const cleanEmail = email.toLowerCase().trim();
-    let user = this.findUserByEmail(cleanEmail);
+    const clean = identifier.trim();
+    let user = this.findUserByIdOrEmail(clean);
 
-    // If account doesn't exist, automatically provision with correct derived name from email
+    // If account doesn't exist, automatically provision with correct derived name from email or ID
     if (!user) {
-      const derivedName = formatNameFromEmail(cleanEmail);
+      let role = selectedRole || 'inspector';
+      const upper = clean.toUpperCase();
+      if (upper.startsWith('MFG') || clean.toLowerCase().includes('packager')) {
+        role = 'packager';
+      } else if (upper.startsWith('FSSAI') || clean.toLowerCase().includes('fso')) {
+        role = 'fssai';
+      }
+
+      let badgePrefix = 'LM-INSP';
+      let roleTitle = 'Legal Metrology Inspector';
+      if (role === 'packager') {
+        badgePrefix = 'MFG';
+        roleTitle = 'Brand Packager Compliance Officer';
+      } else if (role === 'fssai') {
+        badgePrefix = 'FSSAI-FSO';
+        roleTitle = 'Food Safety Officer';
+      }
+
+      const generatedBadge = (upper.startsWith('MFG-') || upper.startsWith('LM-') || upper.startsWith('FSSAI-'))
+        ? upper
+        : `${badgePrefix}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      const email = clean.includes('@') ? clean.toLowerCase() : `${clean.toLowerCase().replace(/[^a-z0-9]/g, '')}@lmpc.gov.in`;
+
       const regRes = this.registerUser({
-        name: derivedName,
-        email: cleanEmail,
+        name: formatNameFromEmail(clean),
+        email: email,
         password: password || 'Default@2026',
-        role: 'inspector'
+        role: role
       });
+
       if (regRes.success) {
         user = regRes.user;
+        user.badgeNumber = generatedBadge;
+        user.role = role;
+        user.roleLabel = roleTitle;
       } else {
         return { success: false, error: regRes.error || 'Failed to authenticate user.' };
       }
     } else {
-      // If user exists and password is provided, update password if needed to keep test sessions smooth
+      // Sync selected role if specified
+      if (selectedRole && user.role !== selectedRole) {
+        user.role = selectedRole;
+        if (selectedRole === 'packager') {
+          user.roleLabel = 'Brand Packager Compliance Officer';
+        } else if (selectedRole === 'fssai') {
+          user.roleLabel = 'Food Safety Officer';
+        } else if (selectedRole === 'inspector') {
+          user.roleLabel = 'Senior Legal Metrology Inspector';
+        }
+      }
       if (password && user.password && user.password !== password) {
         user.password = password;
-        const users = this.getUsers().map((u) => u.email === cleanEmail ? { ...u, password } : u);
+        const users = this.getUsers().map((u) => u.id === user.id ? { ...u, password } : u);
         localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(users));
       }
     }
 
-    const token = `lmpc_jwt_${btoa(`${user.email}:${Date.now()}`)}`;
+    const token = `lmpc_jwt_${btoa(`${user.email || user.badgeNumber}:${Date.now()}`)}`;
     const safeUser = { ...user };
     delete safeUser.password;
 
