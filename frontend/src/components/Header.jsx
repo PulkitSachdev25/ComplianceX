@@ -12,7 +12,8 @@ import shieldLogo from '../assets/lmpc_shield_logo.png';
 export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, onAuthModalToggle }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queuedCount, setQueuedCount] = useState(0);
-  const [historyCount, setHistoryCount] = useState(() => scanHistory.getHistory().length);
+  const activeBadge = currentUser?.badgeNumber || 'LM-INSP-DEL-4091';
+  const [historyCount, setHistoryCount] = useState(() => scanHistory.getHistoryByOfficer(activeBadge).length);
   const [currentTime, setCurrentTime] = useState(new Date().toUTCString());
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
@@ -31,7 +32,10 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
     window.addEventListener('offline', handleOffline);
 
     const checkAuth = () => {
-      setCurrentUser(authDb.getCurrentUser());
+      const u = authDb.getCurrentUser();
+      setCurrentUser(u);
+      const b = u?.badgeNumber || 'LM-INSP-DEL-4091';
+      setHistoryCount(scanHistory.getHistoryByOfficer(b).length);
     };
 
     const updateQueue = () => {
@@ -40,7 +44,8 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
     };
 
     const updateHistory = () => {
-      setHistoryCount(scanHistory.getHistory().length);
+      const b = currentUser?.badgeNumber || 'LM-INSP-DEL-4091';
+      setHistoryCount(scanHistory.getHistoryByOfficer(b).length);
     };
 
     updateQueue();
@@ -353,6 +358,8 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
       <ScanHistoryModal
         isOpen={historyModalOpen}
         onClose={() => setHistoryModalOpen(false)}
+        currentUser={currentUser}
+        onOpenAuth={() => setAuthModalOpen(true)}
       />
     </header>
   );

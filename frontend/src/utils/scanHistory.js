@@ -113,6 +113,81 @@ const DEFAULT_SCAN_HISTORY = [
       top: null,
       bottom: null
     }
+  },
+  {
+    id: 'scan_hist_05',
+    docketId: 'FSSAI-2026-DEL-1120',
+    commodityName: 'Cadbury Dairy Milk Silk Hazelnut (150g)',
+    brandName: 'Mondelez India Foods',
+    category: 'Chocolates & Cocoa Products',
+    mode: 'inspector',
+    inspectorId: 'FSSAI-FSO-1024',
+    officerName: 'Dr. Sunita Deshmukh',
+    isCompliant: true,
+    violationsCount: 0,
+    violations: [],
+    fineInr: 0,
+    location: 'FDA Bhawan Inspection Station, Delhi',
+    timestamp: '2026-09-14T07:15:00.000Z',
+    merkleRoot: '4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a',
+    panels: {
+      front: 'https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=400&auto=format&fit=crop&q=80',
+      back: null,
+      top: null,
+      bottom: null
+    }
+  },
+  {
+    id: 'scan_hist_06',
+    docketId: 'FSSAI-2026-DEL-1045',
+    commodityName: 'Maggi 2-Minute Special Masala Noodles (70g)',
+    brandName: 'Nestlé India Limited',
+    category: 'Instant Noodles & Pasta',
+    mode: 'inspector',
+    inspectorId: 'FSSAI-FSO-1024',
+    officerName: 'Dr. Sunita Deshmukh',
+    isCompliant: false,
+    violationsCount: 1,
+    violations: [
+      {
+        rule: 'FSSAI (Advertising and Claims) Regulations 2018',
+        section: 'Regulation 4(1) - Sodium Claim Variance',
+        description: 'Front-of-pack claims "Low Sodium Alternative", but laboratory analysis detects 820mg sodium per 100g, exceeding statutory threshold.'
+      }
+    ],
+    fineInr: 50000,
+    location: 'Connaught Place Retail Hub, New Delhi',
+    timestamp: '2026-09-13T16:30:25.000Z',
+    merkleRoot: 'ef2d127de37b942baad06145e54b0c619a1f22327b2ebbcfbec78f5564afe39d',
+    panels: {
+      front: 'https://images.unsplash.com/photo-1612927601601-6638404737ce?w=400&auto=format&fit=crop&q=80',
+      back: null,
+      top: null,
+      bottom: null
+    }
+  },
+  {
+    id: 'scan_hist_07',
+    docketId: 'MFG-2026-DAB-0512',
+    commodityName: 'Dabur 100% Pure Honey (500g Squeezy Pack)',
+    brandName: 'Dabur India Limited',
+    category: 'Honey & Natural Sweeteners',
+    mode: 'inspector',
+    inspectorId: 'MFG-3302',
+    officerName: 'Vikramaditya Roy',
+    isCompliant: true,
+    violationsCount: 0,
+    violations: [],
+    fineInr: 0,
+    location: 'Sahibabad Plant Packaging Line 3, Ghaziabad',
+    timestamp: '2026-09-14T05:20:00.000Z',
+    merkleRoot: '3e45642d627b0b6e1564756b10702845c478a571f54a88f28df13b2c34a02c34',
+    panels: {
+      front: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=400&auto=format&fit=crop&q=80',
+      back: null,
+      top: null,
+      bottom: null
+    }
   }
 ];
 
@@ -141,6 +216,12 @@ class ScanHistoryManager {
     }
   }
 
+  getHistoryByOfficer(badgeNumber) {
+    const all = this.getHistory();
+    if (!badgeNumber) return all;
+    return all.filter((item) => (item.inspectorId || '').toLowerCase().trim() === badgeNumber.toLowerCase().trim());
+  }
+
   addScan(scanRecord) {
     try {
       const history = this.getHistory();
@@ -164,8 +245,7 @@ class ScanHistoryManager {
       };
 
       history.unshift(newEntry);
-      // Keep most recent 50 scans to manage localStorage quota cleanly
-      const trimmed = history.slice(0, 50);
+      const trimmed = history.slice(0, 60);
       localStorage.setItem(SCAN_HISTORY_KEY, JSON.stringify(trimmed));
       window.dispatchEvent(new Event('lmpc_history_change'));
       return newEntry;
@@ -199,8 +279,8 @@ class ScanHistoryManager {
     }
   }
 
-  getStats() {
-    const history = this.getHistory();
+  getStats(badgeNumber = null) {
+    const history = badgeNumber ? this.getHistoryByOfficer(badgeNumber) : this.getHistory();
     const total = history.length;
     const nonCompliant = history.filter((item) => !item.isCompliant).length;
     const compliant = history.filter((item) => item.isCompliant).length;

@@ -13,14 +13,18 @@ import {
   AlertTriangle, 
   CheckCircle,
   Hash,
-  Scale
+  Scale,
+  Shield,
+  Layers,
+  Lock
 } from 'lucide-react';
 import { scanHistory } from '../../utils/scanHistory';
 import './ScanHistoryModal.css';
 
-export default function ScanHistoryModal({ isOpen, onClose }) {
+export default function ScanHistoryModal({ isOpen, onClose, currentUser, onOpenAuth }) {
   const [historyItems, setHistoryItems] = useState(() => scanHistory.getHistory());
   const [filter, setFilter] = useState('all'); // 'all' | 'violations' | 'compliant'
+  const [viewScope, setViewScope] = useState('my'); // 'my' (this officer's scans) | 'all' (all scans)
   const [searchQuery, setSearchQuery] = useState('');
 
   const refreshHistory = () => {
@@ -35,9 +39,30 @@ export default function ScanHistoryModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const stats = scanHistory.getStats();
+  // Active officer ID badge
+  const activeOfficerBadge = currentUser?.badgeNumber || 'LM-INSP-DEL-4091';
+  const isCustomUser = Boolean(currentUser);
 
-  const filteredItems = historyItems.filter((item) => {
+  // Scans filtered by officer
+  const myScans = historyItems.filter(
+    (item) => (item.inspectorId || '').toLowerCase().trim() === activeOfficerBadge.toLowerCase().trim()
+  );
+  const myScansCount = myScans.length;
+  const allScansCount = historyItems.length;
+
+  // Items based on viewScope
+  const scopeItems = viewScope === 'my' ? myScans : historyItems;
+
+  // Stats computed dynamically for current scope
+  const stats = {
+    total: scopeItems.length,
+    nonCompliant: scopeItems.filter((i) => !i.isCompliant).length,
+    compliant: scopeItems.filter((i) => i.isCompliant).length,
+    totalFines: scopeItems.reduce((acc, i) => acc + (i.fineInr || 0), 0)
+  };
+
+  // Search & tab filter
+  const filteredItems = scopeItems.filter((item) => {
     if (filter === 'violations' && item.isCompliant) return false;
     if (filter === 'compliant' && !item.isCompliant) return false;
     if (!searchQuery.trim()) return true;
@@ -56,8 +81,13 @@ export default function ScanHistoryModal({ isOpen, onClose }) {
   };
 
   const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to clear your local statutory scan history?')) {
-      scanHistory.clearHistory();
+    const targetDesc = viewScope === 'my' ? `scans logged under ${activeOfficerBadge}` : 'all local scan records';
+    if (window.confirm(`Are you sure you want to delete ${targetDesc}?`)) {
+      if (viewScope === 'my') {
+        myScans.forEach((item) => scanHistory.deleteScan(item.id));
+      } else {
+        scanHistory.clearHistory();
+      }
       refreshHistory();
     }
   };
@@ -91,15 +121,60 @@ export default function ScanHistoryModal({ isOpen, onClose }) {
 
         {/* Header */}
         <div className="lmpc-history-header">
-          <div className="lmpc-history-title-row">
-            <div className="lmpc-history-icon-badge">
-              <History size={22} />
+          <div className="lmpc-history-title-row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div className="lmpc-history-icon-badge">
+                <History size={22} />
+              </div>
+              <div>
+                <h2>Statutory Scan & Audit History Ledger</h2>
+                <p>
+                  Immutable record of commodities inspected under Officer Badge <strong>{activeOfficerBadge}</strong>.
+                </p>
+              </div>
             </div>
-            <div>
-              <h2>Statutory Scan & Audit History Ledger</h2>
-              <p>
-                Immutable record of all scanned commodities, Section 36(1) audit dockets & SHA-256 evidence.
-              </p>
+
+            {/* Officer Identification Pill */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{
+                background: 'rgba(56, 225, 217, 0.12)',
+                border: '1px solid rgba(56, 225, 217, 0.35)',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                fontSize: '0.75rem'
+              }}>
+                <Shield size={13} color="#38E1D9" />
+                <span style={{ color: '#E2E8F0', fontWeight: 600 }}>
+                  Officer: <strong style={{ color: '#38E1D9' }}>{activeOfficerBadge}</strong>
+                  {currentUser?.name && <span style={{ opacity: 0.85, marginLeft: '4px' }}>• {currentUser.name}</span>}
+                </span>
+              </div>
+
+              {!currentUser && onOpenAuth && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onOpenAuth();
+                  }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#94A3B8',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '0.7rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
+                  }}
+                >
+                  <Lock size={11} /> Switch Officer
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -110,7 +185,9 @@ export default function ScanHistoryModal({ isOpen, onClose }) {
             <Scale size={16} color="#38E1D9" />
             <div>
               <div className="lmpc-history-stat-val">{stats.total}</div>
-              <div className="lmpc-history-stat-lbl">Total Scans</div>
+              <div className="lmpc-history-stat-lbl">
+                {viewScope === 'my' ? 'My Scans' : 'Total Department Scans'}
+              </div>
             </div>
           </div>
 
@@ -147,24 +224,45 @@ export default function ScanHistoryModal({ isOpen, onClose }) {
           )}
         </div>
 
-        {/* Controls: Search & Filters */}
+        {/* Controls: Search, Scope Toggle & Category Filters */}
         <div className="lmpc-history-controls">
           <div className="lmpc-history-search">
             <Search size={15} />
             <input
               type="text"
-              placeholder="Search by commodity, brand, docket ID, or inspector..."
+              placeholder={`Search ${viewScope === 'my' ? `scans by ${activeOfficerBadge}` : 'all department scans'}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
+          {/* Scope Switcher: My Scans vs All Department */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <button
+              className={`lmpc-history-scope-btn ${viewScope === 'my' ? 'active' : ''}`}
+              onClick={() => setViewScope('my')}
+              title="Show only items scanned by my active Officer ID"
+            >
+              <User size={12} />
+              My Scans ({myScansCount})
+            </button>
+            <button
+              className={`lmpc-history-scope-btn ${viewScope === 'all' ? 'active' : ''}`}
+              onClick={() => setViewScope('all')}
+              title="Show scans across all department officers"
+            >
+              <Layers size={12} />
+              All Officers ({allScansCount})
+            </button>
+          </div>
+
+          {/* Verdict Filter Tabs */}
           <div className="lmpc-history-filter-tabs">
             <button
               className={`lmpc-history-filter-tab ${filter === 'all' ? 'active' : ''}`}
               onClick={() => setFilter('all')}
             >
-              All ({historyItems.length})
+              All ({scopeItems.length})
             </button>
             <button
               className={`lmpc-history-filter-tab ${filter === 'violations' ? 'active' : ''}`}
@@ -186,20 +284,37 @@ export default function ScanHistoryModal({ isOpen, onClose }) {
           {filteredItems.length === 0 ? (
             <div className="lmpc-history-empty">
               <FileText size={42} />
-              <h4>No matching scan records found</h4>
+              <h4>
+                {viewScope === 'my' 
+                  ? `No scans found for Officer ${activeOfficerBadge}` 
+                  : 'No matching department scan records'}
+              </h4>
               <p>
                 {searchQuery 
                   ? 'Try adjusting your search query or filter criteria.' 
-                  : 'Start scanning commodities in Inspector or Citizen mode to populate your audit ledger.'}
+                  : `Commodities you inspect in Inspector Mode using camera or batch sampling will appear here under Officer ID ${activeOfficerBadge}.`}
               </p>
             </div>
           ) : (
             filteredItems.map((item) => (
               <div key={item.id} className="lmpc-scan-card">
                 <div className="lmpc-scan-card-header">
-                  <span className="lmpc-scan-docket-badge">
-                    {item.docketId}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span className="lmpc-scan-docket-badge">
+                      {item.docketId}
+                    </span>
+                    <span style={{
+                      fontSize: '0.675rem',
+                      fontWeight: 700,
+                      background: 'rgba(56, 225, 217, 0.1)',
+                      border: '1px solid rgba(56, 225, 217, 0.25)',
+                      color: '#38E1D9',
+                      padding: '2px 6px',
+                      borderRadius: '4px'
+                    }}>
+                      Officer: {item.inspectorId || 'LM-INSP-DEL-4091'}
+                    </span>
+                  </div>
 
                   <span className={`lmpc-scan-verdict-badge ${item.isCompliant ? 'compliant' : 'violation'}`}>
                     {item.isCompliant ? (
@@ -226,10 +341,12 @@ export default function ScanHistoryModal({ isOpen, onClose }) {
                     {formatDate(item.timestamp)}
                   </span>
 
-                  <span className="lmpc-scan-meta-item">
-                    <User size={12} />
-                    Officer: <strong>{item.inspectorId || 'LM-INSP-DEL-4091'}</strong>
-                  </span>
+                  {item.brandName && (
+                    <span className="lmpc-scan-meta-item">
+                      <FileText size={12} />
+                      Brand: <strong>{item.brandName}</strong>
+                    </span>
+                  )}
 
                   {item.location && (
                     <span className="lmpc-scan-meta-item">
@@ -265,7 +382,7 @@ export default function ScanHistoryModal({ isOpen, onClose }) {
                 <div className="lmpc-scan-card-footer">
                   <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontFamily: 'monospace' }}>
                     <Hash size={11} />
-                    Merkle SHA-256: {(item.merkleRoot || '').substring(0, 24)}...
+                    Evidentiary SHA-256: {(item.merkleRoot || '').substring(0, 24)}...
                   </span>
 
                   <button
@@ -285,12 +402,12 @@ export default function ScanHistoryModal({ isOpen, onClose }) {
         {/* Footer */}
         <div className="lmpc-history-footer">
           <span style={{ fontSize: '0.72rem', color: '#64748B' }}>
-            Showing {filteredItems.length} of {historyItems.length} total local audit records
+            Showing {filteredItems.length} of {scopeItems.length} records for {viewScope === 'my' ? `Officer ${activeOfficerBadge}` : 'all officers'}
           </span>
 
-          {historyItems.length > 0 && (
+          {scopeItems.length > 0 && (
             <button className="lmpc-history-clear-btn" onClick={handleClearAll}>
-              Clear All Audit History
+              Clear {viewScope === 'my' ? `Officer ${activeOfficerBadge} Logs` : 'All Logs'}
             </button>
           )}
         </div>

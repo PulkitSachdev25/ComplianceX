@@ -215,6 +215,33 @@
   border: 1px solid rgba(56, 225, 217, 0.35);
 }
 
+.lmpc-history-scope-btn {
+  background: rgba(10, 18, 32, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+  font-size: 0.725rem;
+  font-weight: 700;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.lmpc-history-scope-btn:hover {
+  color: #E2E8F0;
+  border-color: rgba(56, 225, 217, 0.3);
+}
+
+.lmpc-history-scope-btn.active {
+  background: linear-gradient(135deg, rgba(56, 225, 217, 0.2) 0%, rgba(14, 165, 233, 0.2) 100%);
+  color: #38E1D9;
+  border-color: rgba(56, 225, 217, 0.45);
+  box-shadow: 0 2px 8px rgba(56, 225, 217, 0.15);
+}
+
 /* Scrollable Scan List */
 .lmpc-history-list {
   flex: 1;
