@@ -225,7 +225,8 @@ export default function DeceptionVerdictCard({ result, slotIndex }) {
         <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1A365D', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
           FSSAI Nutritional Declaration (Per 100g / 100ml)
         </h4>
-        <table className="civic-table" style={{ fontSize: '0.78rem' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="civic-table" style={{ fontSize: '0.78rem' }}>
           <thead>
             <tr>
               <th>Energy</th>
@@ -253,7 +254,9 @@ export default function DeceptionVerdictCard({ result, slotIndex }) {
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
 }
+

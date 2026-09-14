@@ -15,25 +15,25 @@ export default function CitizenMode({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Products state array (up to 3 items)
+  // Products state array (up to 3 items) initialized clean with no pre-loaded sample reports
   const [productsData, setProductsData] = useState([
     {
       product_id: 'prod_1',
-      preset_key: 'zero_sugar_juice',
+      preset_key: null,
       front_image_b64: null,
       back_image_b64: null,
       manual_data: null
     },
     {
       product_id: 'prod_2',
-      preset_key: 'atta_cookies',
+      preset_key: null,
       front_image_b64: null,
       back_image_b64: null,
       manual_data: null
     },
     {
       product_id: 'prod_3',
-      preset_key: 'protein_bar',
+      preset_key: null,
       front_image_b64: null,
       back_image_b64: null,
       manual_data: null
@@ -84,13 +84,17 @@ export default function CitizenMode({
     setLoading(true);
     setError(null);
     try {
-      const activeProducts = productsData.slice(0, productCount).map((p, idx) => ({
-        product_id: `prod_${idx + 1}`,
-        preset_key: p.preset_key,
-        front_image_b64: p.front_image_b64,
-        back_image_b64: p.back_image_b64,
-        manual_data: p.manual_data
-      }));
+      const activeProducts = productsData.slice(0, productCount).map((prod, idx) => {
+        const hasCustomImages = Boolean(prod.front_image_b64 || prod.back_image_b64);
+        return {
+          product_id: `prod_${idx + 1}`,
+          // Pass preset_key ONLY if no custom images exist AND a dropdown choice was made
+          preset_key: hasCustomImages ? null : (prod.preset_key || null),
+          front_image_b64: prod.front_image_b64 || null,
+          back_image_b64: prod.back_image_b64 || null,
+          manual_data: hasCustomImages ? null : (prod.manual_data || null)
+        };
+      });
 
       const res = await fetch(`${apiBaseUrl}/api/citizen/analyze`, {
         method: 'POST',
@@ -111,11 +115,6 @@ export default function CitizenMode({
       setLoading(false);
     }
   };
-
-  // Auto-run initial analysis on first load
-  useEffect(() => {
-    runAnalysis();
-  }, [productCount]);
 
   return (
     <div className="civic-container">
@@ -187,14 +186,7 @@ export default function CitizenMode({
       )}
 
       {/* Product Upload / Camera Modules Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${productCount}, 1fr)`,
-          gap: '1.25rem',
-          marginBottom: '1.25rem'
-        }}
-      >
+      <div className="grid-3" style={{ marginBottom: '1.25rem' }}>
         {productsData.slice(0, productCount).map((p, idx) => (
           <ProductUploadCard
             key={idx}
@@ -240,13 +232,7 @@ export default function CitizenMode({
             </h2>
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${productCount}, 1fr)`,
-              gap: '1.25rem'
-            }}
-          >
+          <div className="grid-3">
             {analysisResults.products.map((res, idx) => (
               <AnimatedItem key={idx} index={idx} delay={idx * 0.1}>
                 <DeceptionVerdictCard result={res} slotIndex={idx + 1} />
@@ -266,3 +252,4 @@ export default function CitizenMode({
     </div>
   );
 }
+

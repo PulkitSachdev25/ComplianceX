@@ -1,31 +1,60 @@
 """
 Chain of Custody & Forensic Cryptographic Ledger
-Computes SHA-256 digital signatures across all 4 camera panels (Front, Back, Top, Bottom)
-to guarantee evidentiary admissibility under Section 65B of the Indian Evidence Act / BSA.
+Computes dynamic SHA-256 digital signatures across active camera panels (1 to N)
+with sequential combined Master Hash and variable-leaf Merkle root calculation
+to guarantee evidentiary admissibility under Section 65B of the Indian Evidence Act / Section 63 Bharatiya Sakshya Adhiniyam, 2023.
 """
 
 import hashlib
-import json
-import time
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
+
 class ChainOfCustody:
-    """Manages tamper-proof cryptographic ledger and evidence hashes."""
+    """Manages tamper-proof cryptographic ledger and dynamic panel evidence hashes."""
 
     @staticmethod
     def hash_bytes(data: bytes) -> str:
         """Calculates SHA-256 digest of raw byte stream."""
-        h = hashlib.sha256()
-        h.update(data)
-        return h.hexdigest()
+        return hashlib.sha256(data).hexdigest()
 
     @staticmethod
-    def hash_string(text: str) -> str:
+    def hash_string(data_str: str) -> str:
         """Calculates SHA-256 digest of string data (e.g. base64 or JSON)."""
-        h = hashlib.sha256()
-        h.update(text.encode('utf-8'))
-        return h.hexdigest()
+        return hashlib.sha256(data_str.encode("utf-8")).hexdigest()
+
+    @classmethod
+    def compute_master_hash(cls, leaf_hashes: List[str]) -> str:
+        """
+        Deterministically combines the hashes of the active panels in sequential order:
+        SHA-256(hash_1 + hash_2 + ... + hash_N)
+        """
+        if not leaf_hashes:
+            return cls.hash_string("EMPTY_EVIDENTIARY_RECORD")
+        combined_payload = "".join(leaf_hashes)
+        return cls.hash_string(combined_payload)
+
+    @classmethod
+    def compute_merkle_root(cls, leaf_hashes: List[str]) -> str:
+        """
+        Iteratively folds an arbitrary list of SHA-256 hashes into a Merkle root.
+        Supports 1, 2, 3, 4, or N panel captures.
+        """
+        if not leaf_hashes:
+            return cls.hash_string("EMPTY_EVIDENTIARY_RECORD")
+
+        current_level = list(leaf_hashes)
+        while len(current_level) > 1:
+            next_level = []
+            for i in range(0, len(current_level), 2):
+                left = current_level[i]
+                # If odd number of nodes at this level, duplicate the last node
+                right = current_level[i + 1] if i + 1 < len(current_level) else left
+                combined = cls.hash_string(left + right)
+                next_level.append(combined)
+            current_level = next_level
+
+        return current_level[0]
 
     @classmethod
     def generate_chain_of_custody(
@@ -36,48 +65,70 @@ class ChainOfCustody:
         docket_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Creates a Merkle digest combining all 4 panel hashes, GPS coordinates, and UTC timestamp.
+        Builds the Section 63 BSA compliance ledger from dynamic panel hashes.
+        Dynamically processes ONLY the provided non-empty panel hashes (exactly N panels).
         """
-        now_utc = datetime.now(timezone.utc).isoformat()
-        if not docket_id:
-            raw_entropy = f"{now_utc}_{inspector_id}_{panel_hashes.get('front', '')[:10]}"
-            docket_id = f"GOI-LM-2026-{hashlib.sha256(raw_entropy.encode()).hexdigest()[:8].upper()}"
+        # Filter out empty or null values to strictly process only active/uploaded panels
+        active_panel_hashes = {k: v for k, v in panel_hashes.items() if v}
+        leaf_hashes = list(active_panel_hashes.values())
+        
+        master_hash = cls.compute_master_hash(leaf_hashes)
+        raw_merkle_root = cls.compute_merkle_root(leaf_hashes)
 
-        front_h = panel_hashes.get("front", "0" * 64)
-        back_h = panel_hashes.get("back", "0" * 64)
-        top_h = panel_hashes.get("top", "0" * 64)
-        bottom_h = panel_hashes.get("bottom", "0" * 64)
+        timestamp_iso = datetime.now(timezone.utc).isoformat()
+        if not timestamp_iso.endswith("Z") and "+00:00" not in timestamp_iso:
+            timestamp_iso += "Z"
 
-        lat = gps_coords.get("latitude", 28.6139) # Default New Delhi
-        lon = gps_coords.get("longitude", 77.2090)
-        location_name = gps_coords.get("display_name", "Central Regulatory District, New Delhi, India")
+        lat = gps_coords.get("latitude") or gps_coords.get("lat") or 28.7095
+        lng = gps_coords.get("longitude") or gps_coords.get("lng") or gps_coords.get("lon") or 77.1565
+        try:
+            lat = float(lat)
+            lng = float(lng)
+        except (ValueError, TypeError):
+            lat = 28.7095
+            lng = 77.1565
 
-        # Merkle Tree style Master Hash
-        leaf_1_2 = cls.hash_string(f"{front_h}:{back_h}")
-        leaf_3_4 = cls.hash_string(f"{top_h}:{bottom_h}")
-        merkle_root = cls.hash_string(f"{leaf_1_2}:{leaf_3_4}")
+        loc_str = gps_coords.get("display_name") or gps_coords.get("formatted_address") or "New Delhi, India"
 
-        # Master Evidence Digest
-        master_payload = f"{merkle_root}|{docket_id}|{inspector_id}|{lat:.6f}|{lon:.6f}|{now_utc}"
-        master_hash = cls.hash_string(master_payload)
+        # Composite evidentiary signature
+        composite_sig_payload = f"{master_hash}|{inspector_id}|{timestamp_iso}|{lat:.4f},{lng:.4f}"
+        master_evidence_seal = cls.hash_string(composite_sig_payload)
+
+        generated_docket_id = docket_id if docket_id else f"GOI-LM-2026-{master_hash[:8].upper()}"
+
+        # Array of individual hashes tagged by their panel identifier and 1-based index
+        individual_hashes_list = [
+            {
+                "panel_id": k,
+                "hash": v,
+                "index": idx + 1
+            }
+            for idx, (k, v) in enumerate(active_panel_hashes.items())
+        ]
 
         return {
-            "docket_id": docket_id,
-            "timestamp_utc": now_utc,
+            "docket_id": generated_docket_id,
+            "master_hash": master_hash,
+            "merkle_root": master_evidence_seal,
+            "raw_merkle_root": raw_merkle_root,
+            "master_evidence_sha256": master_evidence_seal,
+            "panel_hashes": active_panel_hashes,
+            "individual_hashes": individual_hashes_list,
+            "total_panels_hashed": len(leaf_hashes),
             "inspector_id": inspector_id,
+            "timestamp_utc": timestamp_iso,
+            "gps_coordinates": {
+                "latitude": lat,
+                "longitude": lng,
+                "formatted_address": loc_str
+            },
             "geolocation": {
                 "latitude": lat,
-                "longitude": lon,
-                "display_name": location_name,
+                "longitude": lng,
+                "display_name": loc_str,
+                "formatted_address": loc_str,
                 "accuracy_meters": gps_coords.get("accuracy", 5.0)
             },
-            "panel_hashes": {
-                "front": front_h,
-                "back": back_h,
-                "top": top_h,
-                "bottom": bottom_h
-            },
-            "merkle_root": merkle_root,
-            "master_evidence_sha256": master_hash,
-            "evidentiary_standard": "Indian Evidence Act Section 65B / Bharatiya Sakshya Adhiniyam, 2023 Digital Certificate Validated"
+            "statutory_evidence_clause": "Certified under Section 63 of Bharatiya Sakshya Adhiniyam, 2023.",
+            "evidentiary_standard": "Certified under Section 63 of Bharatiya Sakshya Adhiniyam, 2023."
         }

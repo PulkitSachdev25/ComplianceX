@@ -7,26 +7,36 @@ of the Legal Metrology (Packaged Commodities) Rules, 2011, under Section 36(1) o
 import re
 from typing import Dict, Any, List, Optional, Tuple
 
+from engines.postal_service import PostalReconciliationService
+
+
 class LegalMetrologyEngine:
     """Rules and math validation engine for Legal Metrology Packaged Commodities."""
 
     @staticmethod
-    def parse_net_quantity(qty_str: str) -> Tuple[Optional[float], Optional[str], Optional[float], Optional[str]]:
+    def parse_net_quantity(qty_str: Any) -> Tuple[Optional[float], Optional[str], Optional[float], Optional[str]]:
         """
         Parses declared quantity string (e.g. '250 g', '1.5 kg', '500 ml', '1 L', '10 N')
         Returns: (raw_value, raw_unit, normalized_value, standard_unit)
         """
-        if not qty_str:
+        if qty_str is None:
             return None, None, None, None
         
-        match = re.search(r'([\d.]+)\s*([a-zA-Z]+)', str(qty_str).strip())
+        clean_str = str(qty_str).strip()
+        if not clean_str:
+            return None, None, None, None
+        
+        match = re.search(r'([\d.]+)\s*([a-zA-Z]+)', clean_str)
         if not match:
             return None, None, None, None
         
         try:
             val = float(match.group(1))
             unit = match.group(2).lower()
-        except ValueError:
+        except (ValueError, TypeError):
+            return None, None, None, None
+
+        if val <= 0:
             return None, None, None, None
 
         if unit in ['g', 'gm', 'gms', 'gram', 'grams']:
@@ -50,14 +60,14 @@ class LegalMetrologyEngine:
         - Packages >= 1 kg or >= 1 L: declared in Rs. per kg or Rs. per L.
         - Items by number: declared in Rs. per N / item.
         """
-        if mrp <= 0 or qty_val <= 0:
+        if not mrp or not qty_val or mrp <= 0 or qty_val <= 0 or not qty_unit:
             return {
                 "statutory_usp": 0.0,
                 "statutory_unit": "N/A",
                 "display_str": "Invalid MRP/Qty"
             }
 
-        unit_clean = qty_unit.lower()
+        unit_clean = str(qty_unit).strip().lower()
 
         if unit_clean == 'g':
             if qty_val < 1000:
@@ -119,45 +129,69 @@ class LegalMetrologyEngine:
             }
 
     @classmethod
-    def validate_audit(cls, audit_input: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_audit(cls, audit_input: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Evaluates 6 mandatory declarations and USP math integrity.
         """
         violations: List[Dict[str, Any]] = []
         compliant_rules: List[Dict[str, Any]] = []
 
-        mfg_details = audit_input.get("manufacturer_details", {}) or {}
-        commodity = audit_input.get("commodity_name", "") or ""
-        net_qty_raw = audit_input.get("net_quantity", "") or ""
-        mfg_date = audit_input.get("mfg_date", "") or ""
-        mrp_raw = audit_input.get("mrp", 0.0)
-        declared_usp_raw = audit_input.get("declared_usp", None)
-        consumer_care = audit_input.get("consumer_care", {}) or {}
-        fop_declaration_present = audit_input.get("fop_declaration_present", True)
+        if not isinstance(audit_input, dict):
+            audit_input = {}
 
+        # Safe Root Level Extractions (handles None, missing, or alternate keys)
+        commodity = (audit_input.get("commodity_name") or audit_input.get("product_name") or "").strip()
+        net_qty_raw = (audit_input.get("net_quantity") or "").strip()
+        mfg_date = (audit_input.get("mfg_date") or audit_input.get("mfg_expiry_dates") or "").strip()
+        declared_usp_raw = audit_input.get("declared_usp")
+        mfg_details = audit_input.get("manufacturer_details")
+        consumer_care = audit_input.get("consumer_care")
+
+        # MRP float parsing guard
+        mrp_raw = audit_input.get("mrp", 0.0)
         try:
-            mrp = float(mrp_raw or 0.0)
+            if isinstance(mrp_raw, str):
+                mrp_clean = re.sub(r'[^\d.]', '', mrp_raw)
+                mrp = float(mrp_clean) if mrp_clean else 0.0
+            else:
+                mrp = float(mrp_raw or 0.0)
         except (ValueError, TypeError):
             mrp = 0.0
 
         # -------------------------------------------------------------
         # Rule 6(1)(a): Manufacturer / Packer / Importer Name & Address + PIN
         # -------------------------------------------------------------
-        mfg_name = mfg_details.get("name", "").strip()
-        mfg_address = mfg_details.get("address", "").strip()
-        mfg_pin = str(mfg_details.get("pin_code", "")).strip()
+        if isinstance(mfg_details, dict):
+            mfg_name = str(mfg_details.get("name") or "").strip()
+            mfg_address = str(mfg_details.get("address") or "").strip()
+            mfg_pin = str(mfg_details.get("pin_code") or "").strip()
+        elif isinstance(mfg_details, str) and mfg_details.strip():
+            mfg_name = mfg_details.strip()
+            mfg_address = mfg_details.strip()
+            pin_search = re.search(r'\b[1-9][0-9]{5}\b', mfg_details)
+            mfg_pin = pin_search.group(0) if pin_search else ""
+        else:
+            mfg_name, mfg_address, mfg_pin = "", "", ""
 
-        has_valid_pin = bool(re.match(r'^[1-9][0-9]{5}$', mfg_pin))
-        if not mfg_name or not mfg_address or not has_valid_pin:
+        pin_check = PostalReconciliationService.verify_declaration_pin(mfg_pin, mfg_address)
+
+        if not mfg_name or not mfg_address or not pin_check["is_compliant"]:
             reasons = []
-            if not mfg_name: reasons.append("Missing Manufacturer/Packer Name")
-            if not mfg_address: reasons.append("Incomplete Postal Address")
-            if not has_valid_pin: reasons.append("Missing or Invalid 6-digit Indian Postal PIN Code")
+            if not mfg_name:
+                reasons.append("Missing Manufacturer/Packer Name")
+            if not mfg_address:
+                reasons.append("Incomplete Postal Address")
+            if not pin_check["is_compliant"]:
+                reasons.append(pin_check["note"])
             
+            category = "AMBIGUITY_ERROR" if pin_check["status"] == "RESCAN_REQUIRED" else "OMISSION_ERROR"
+
             violations.append({
                 "rule_number": "Rule 6(1)(a)",
+                "declaration_name": "Name, Complete Address & PIN of Manufacturer",
                 "statute": "Legal Metrology (Packaged Commodities) Rules, 2011",
-                "category": "MANUFACTURER_DECLARATION_VIOLATION",
+                "category": category,
+                "status": pin_check["status"],
                 "severity": "CRITICAL",
                 "title": "Non-Compliant Manufacturer/Packer Address Declaration",
                 "details": f"Incomplete details: {', '.join(reasons)}.",
@@ -168,9 +202,11 @@ class LegalMetrologyEngine:
         else:
             compliant_rules.append({
                 "rule_number": "Rule 6(1)(a)",
+                "declaration_name": "Manufacturer Name, Address & PIN",
                 "title": "Manufacturer/Packer Declaration",
                 "status": "COMPLIANT",
-                "evidence": f"{mfg_name}, {mfg_address} - PIN {mfg_pin}"
+                "evidence": f"{mfg_name}, {mfg_address} - PIN {mfg_pin}",
+                "auto_reconciled_note": pin_check["note"]
             })
 
         # -------------------------------------------------------------
@@ -199,7 +235,7 @@ class LegalMetrologyEngine:
         # -------------------------------------------------------------
         # Rule 6(1)(c): Net Quantity in Standard Units
         # -------------------------------------------------------------
-        qty_val, qty_unit, norm_val, norm_unit = cls.parse_net_quantity(str(net_qty_raw))
+        qty_val, qty_unit, norm_val, norm_unit = cls.parse_net_quantity(net_qty_raw)
         if qty_val is None or qty_val <= 0 or not qty_unit:
             violations.append({
                 "rule_number": "Rule 6(1)(c)",
@@ -207,8 +243,8 @@ class LegalMetrologyEngine:
                 "category": "NET_QUANTITY_NON_COMPLIANT",
                 "severity": "CRITICAL",
                 "title": "Invalid or Missing Net Quantity Declaration",
-                "details": f"Declared net quantity '{net_qty_raw}' violates standard SI units (g, kg, ml, l, N).",
-                "evidence": f"Declared Quantity: '{net_qty_raw}'",
+                "details": f"Declared net quantity '{net_qty_raw or 'N/A'}' violates standard SI units (g, kg, ml, l, N).",
+                "evidence": f"Declared Quantity: '{net_qty_raw or 'Missing'}'",
                 "remedial_action": "Declare net weight or measure in standard metric units.",
                 "penalty_applicable": True
             })
@@ -270,12 +306,19 @@ class LegalMetrologyEngine:
         # -------------------------------------------------------------
         # Rule 6(1)(f): Consumer Care & Grievance Details
         # -------------------------------------------------------------
-        care_contact = consumer_care.get("phone", "") or consumer_care.get("tel", "")
-        care_email = consumer_care.get("email", "")
-        care_address = consumer_care.get("address", "")
+        if isinstance(consumer_care, dict):
+            care_contact = str(consumer_care.get("phone") or consumer_care.get("tel") or "").strip()
+            care_email = str(consumer_care.get("email") or "").strip()
+            care_address = str(consumer_care.get("address") or "").strip()
+        elif isinstance(consumer_care, str) and consumer_care.strip():
+            care_contact = consumer_care.strip()
+            care_email = consumer_care.strip()
+            care_address = consumer_care.strip()
+        else:
+            care_contact, care_email, care_address = "", "", ""
         
-        has_care_email = bool(re.search(r'[\w\.-]+@[\w\.-]+\.\w+', str(care_email)))
-        has_care_phone = bool(re.search(r'[\d\s-]{8,15}', str(care_contact)))
+        has_care_email = bool(re.search(r'[\w\.-]+@[\w\.-]+\.\w+', care_email))
+        has_care_phone = bool(re.search(r'[\d\s-]{8,15}', care_contact))
 
         if not (has_care_email or has_care_phone) or not care_address:
             violations.append({
@@ -294,26 +337,26 @@ class LegalMetrologyEngine:
                 "rule_number": "Rule 6(1)(f)",
                 "title": "Consumer Care Redressal Cell",
                 "status": "COMPLIANT",
-                "evidence": f"Tel: {care_contact}, Email: {care_email}"
+                "evidence": f"Tel: {care_contact or 'N/A'}, Email: {care_email or 'N/A'}"
             })
 
         # -------------------------------------------------------------
         # Rule 5: Unit Sale Price (USP) Math & Pricing Fraud Validation
         # -------------------------------------------------------------
-        usp_math_audit = {}
-        if mrp > 0 and qty_val is not None and qty_val > 0:
+        usp_math_audit: Dict[str, Any] = {}
+        if mrp > 0 and qty_val is not None and qty_val > 0 and qty_unit:
             usp_calc = cls.calculate_statutory_usp(mrp, qty_val, qty_unit)
             calc_usp_val = usp_calc["statutory_usp"]
             calc_usp_unit = usp_calc["statutory_unit"]
 
-            if declared_usp_raw is None or declared_usp_raw == "":
+            if declared_usp_raw is None or str(declared_usp_raw).strip() == "":
                 violations.append({
                     "rule_number": "Rule 5 & Rule 6(1)(e)",
                     "statute": "Legal Metrology (Packaged Commodities) Rules, 2011",
                     "category": "USP_MANDATORY_DECLARATION_MISSING",
                     "severity": "CRITICAL",
                     "title": "Mandatory Unit Sale Price (USP) Omitted",
-                    "details": f"Product package fails to declare the statutory Unit Sale Price. Calculated USP for MRP ₹{mrp:.2f} and Net Qty {qty_val}{qty_unit} is ₹{calc_usp_val:.2f}{calc_usp_unit}.",
+                    "details": f"Product package fails to declare statutory Unit Sale Price. Calculated USP for MRP ₹{mrp:.2f} and Net Qty {qty_val}{qty_unit} is ₹{calc_usp_val:.2f}{calc_usp_unit}.",
                     "evidence": f"Printed USP: None. Statutory Expected USP: ₹{calc_usp_val:.2f}{calc_usp_unit}.",
                     "remedial_action": f"Declare Unit Sale Price as '₹{calc_usp_val:.2f}{calc_usp_unit}' adjacent to MRP.",
                     "penalty_applicable": True
@@ -327,7 +370,8 @@ class LegalMetrologyEngine:
                 }
             else:
                 try:
-                    dec_usp_num = float(declared_usp_raw)
+                    dec_clean = re.sub(r'[^\d.]', '', str(declared_usp_raw))
+                    dec_usp_num = float(dec_clean) if dec_clean else 0.0
                     disparity = round(abs(dec_usp_num - calc_usp_val), 2)
                     
                     if disparity > 0.01:
@@ -384,7 +428,6 @@ class LegalMetrologyEngine:
 
         estimated_statutory_fine = 0
         if not is_compliant:
-            # Base compounding fee: ₹10,000 for first violation + ₹5,000 for each subsequent violation up to ₹25,000
             estimated_statutory_fine = min(25000, 10000 + ((total_violations_count - 1) * 5000))
 
         return {
