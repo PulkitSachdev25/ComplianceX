@@ -10,6 +10,7 @@ import ChainOfCustodyLedger from './ChainOfCustodyLedger';
 import OfflineQueueModal from './OfflineQueueModal';
 import TargetedRescanModal from './TargetedRescanModal';
 import { offlineStorage } from '../../utils/offlineStorage';
+import { scanHistory } from '../../utils/scanHistory';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 
 export default function InspectorMode({ 
@@ -231,6 +232,24 @@ export default function InspectorMode({
         fineInr: data.statutory_charge_sheet?.proposed_compounding_fine_inr || 0,
         timestamp: new Date().toISOString()
       };
+
+      // Persist into permanent scan history ledger
+      scanHistory.addScan({
+        docketId: data.docket_id,
+        commodityName: data.commodity_name || `Inspected Commodity ${currentUnitIndex + 1}`,
+        brandName: data.brand_name || 'Legal Metrology Sample',
+        category: data.category || 'Packaged Commodity',
+        mode: 'inspector',
+        inspectorId: inspectorId,
+        isCompliant: data.is_compliant,
+        violationsCount: data.violations_count || (data.violations || []).length,
+        violations: data.violations || [],
+        fineInr: data.statutory_charge_sheet?.proposed_compounding_fine_inr || 0,
+        location: userLocation.formatted_address,
+        merkleRoot: data.merkle_root || data.master_evidence_sha256,
+        panels: unitPanels,
+        timestamp: new Date().toISOString()
+      });
 
       setCompletedUnits((prev) => {
         const filtered = prev.filter((u) => u.unitIndex !== unitRecord.unitIndex);

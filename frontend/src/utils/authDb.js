@@ -34,19 +34,6 @@ const DEFAULT_USERS = [
     createdAt: '2026-02-10T11:15:00.000Z'
   },
   {
-    id: 'usr_gov_03',
-    email: 'citizen.ananya@gmail.com',
-    password: 'Citizen@2026',
-    name: 'Ananya Verma',
-    role: 'citizen',
-    roleLabel: 'Citizen Consumer Advocate',
-    badgeNumber: 'CIVIC-7701',
-    department: 'National Consumer Awareness Network',
-    jurisdiction: 'All India Consumer Grid',
-    isGovVerified: true,
-    createdAt: '2026-03-01T14:45:00.000Z'
-  },
-  {
     id: 'usr_gov_04',
     email: 'compliance@dabur.com',
     password: 'Packager@2026',

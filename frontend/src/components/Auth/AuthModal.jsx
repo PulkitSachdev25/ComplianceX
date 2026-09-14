@@ -123,10 +123,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, initialTab 
           <h2 className="lmpc-auth-title">
             <span className="brand-accent">LMPC</span>
             <span className="brand-sub">Vision</span>
-            <span style={{ fontSize: '0.9rem', color: '#64748B', fontWeight: 500 }}>| Portal</span>
+            <span style={{ fontSize: '0.9rem', color: '#64748B', fontWeight: 500 }}>| Officer Gateway</span>
           </h2>
           <p className="lmpc-auth-subtitle">
-            National Legal Metrology Statutory Enforcement & Citizen Grid
+            National Legal Metrology Statutory Enforcement & Regulatory Division
           </p>
         </div>
 
@@ -137,14 +137,14 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, initialTab 
             onClick={() => { setActiveTab('login'); setError(null); setSuccessMsg(null); }}
           >
             <Lock size={13} />
-            Sign In
+            Officer Sign In
           </button>
           <button
             className={`lmpc-auth-tab ${activeTab === 'register' ? 'active' : ''}`}
             onClick={() => { setActiveTab('register'); setError(null); setSuccessMsg(null); }}
           >
             <User size={13} />
-            Register
+            Officer Register
           </button>
           <button
             className={`lmpc-auth-tab ${activeTab === 'demo' ? 'active' : ''}`}
@@ -176,7 +176,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, initialTab 
             <div className="lmpc-input-group">
               <label>
                 <Mail size={13} />
-                Official / Citizen Email Address
+                Official Officer / Regulatory Email Address
               </label>
               <div className="lmpc-input-wrapper">
                 <Mail size={16} className="input-icon" />
@@ -215,7 +215,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, initialTab 
             </div>
 
             <button type="submit" className="lmpc-submit-btn">
-              Authenticate Statutory Session
+              Authenticate Statutory Officer Session
               <ArrowRight size={16} />
             </button>
           </form>
@@ -227,7 +227,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, initialTab 
             <div className="lmpc-input-group">
               <label>
                 <User size={13} />
-                Full Name
+                Officer Full Name
               </label>
               <div className="lmpc-input-wrapper">
                 <User size={16} className="input-icon" />
@@ -244,7 +244,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, initialTab 
             <div className="lmpc-input-group">
               <label>
                 <Mail size={13} />
-                Official / Citizen Email
+                Official Govt / Industry Email
               </label>
               <div className="lmpc-input-wrapper">
                 <Mail size={16} className="input-icon" />
@@ -261,7 +261,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, initialTab 
             <div className="lmpc-input-group">
               <label>
                 <Award size={13} />
-                Portal Role & Clearance
+                Statutory Role & Clearance
               </label>
               <div className="lmpc-input-wrapper">
                 <Award size={16} className="input-icon" />
@@ -271,8 +271,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, initialTab 
                 >
                   <option value="inspector">Senior Legal Metrology Inspector (Govt)</option>
                   <option value="fssai">FSSAI Food Safety Officer (Govt)</option>
-                  <option value="citizen">Citizen Consumer Advocate</option>
-                  <option value="packager">Brand Packager / Regulatory Industry</option>
+                  <option value="packager">Brand Packager / Regulatory Industry Officer</option>
                 </select>
               </div>
             </div>

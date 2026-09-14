@@ -6,6 +6,7 @@ import ComparisonMatrix from './ComparisonMatrix';
 import { AnimatedItem } from '../../AnimatedList';
 import GooeyNav from '../../GooeyNav';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
+import { scanHistory } from '../../utils/scanHistory';
 
 export default function CitizenMode({ 
   apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://compliancex.onrender.com' 
@@ -108,6 +109,31 @@ export default function CitizenMode({
 
       const data = await res.json();
       setAnalysisResults(data);
+
+      // Save scanned citizen items into persistent scan history
+      const itemsToLog = Array.isArray(data) ? data : (data.products || [data]);
+      itemsToLog.forEach((prodResult) => {
+        if (prodResult && prodResult.product_name) {
+          scanHistory.addScan({
+            docketId: `FSSAI-ADV-${Date.now().toString().slice(-6)}`,
+            commodityName: prodResult.product_name,
+            brandName: prodResult.brand || 'Packaged Brand',
+            category: 'Citizen Food Safety Scan',
+            mode: 'citizen',
+            inspectorId: 'CITIZEN-SCANNER',
+            isCompliant: (prodResult.critical_flags_count || 0) === 0,
+            violationsCount: (prodResult.flags || []).length,
+            violations: (prodResult.flags || []).map((f) => ({
+              section: f.category || 'Nutritional Claim',
+              rule: f.claim || 'FSSAI Regulation',
+              description: f.rationale || f.description || 'Front-of-pack claim variance'
+            })),
+            fineInr: 0,
+            location: 'Citizen Nutritional Scanner',
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
     } catch (err) {
       console.error('Analysis error:', err);
       setError('Failed to analyze products. Please check the backend connection or test presets.');

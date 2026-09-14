@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Scale, HeartPulse, Wifi, WifiOff, Database, Clock, User, LogOut, Lock, KeyRound } from 'lucide-react';
+import { Shield, Scale, HeartPulse, Wifi, WifiOff, Database, Clock, User, LogOut, Lock, KeyRound, History } from 'lucide-react';
 import { offlineStorage } from '../utils/offlineStorage';
 import { authDb } from '../utils/authDb';
+import { scanHistory } from '../utils/scanHistory';
 import AuthModal from './Auth/AuthModal';
+import ScanHistoryModal from './History/ScanHistoryModal';
 import PillNav from '../PillNav';
 import VariableFontHoverByLetter from '@/components/fancy/text/variable-font-hover-by-letter';
 import shieldLogo from '../assets/lmpc_shield_logo.png';
@@ -10,8 +12,10 @@ import shieldLogo from '../assets/lmpc_shield_logo.png';
 export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, onAuthModalToggle }) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queuedCount, setQueuedCount] = useState(0);
+  const [historyCount, setHistoryCount] = useState(() => scanHistory.getHistory().length);
   const [currentTime, setCurrentTime] = useState(new Date().toUTCString());
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(() => authDb.getCurrentUser());
 
   const handleLogout = () => {
@@ -35,13 +39,20 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
       setQueuedCount(q.length);
     };
 
+    const updateHistory = () => {
+      setHistoryCount(scanHistory.getHistory().length);
+    };
+
     updateQueue();
+    updateHistory();
     checkAuth();
 
     window.addEventListener('lmpc_auth_change', checkAuth);
+    window.addEventListener('lmpc_history_change', updateHistory);
     const interval = setInterval(() => {
       setCurrentTime(new Date().toUTCString());
       updateQueue();
+      updateHistory();
       checkAuth();
     }, 2000);
 
@@ -49,6 +60,7 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('lmpc_auth_change', checkAuth);
+      window.removeEventListener('lmpc_history_change', updateHistory);
       clearInterval(interval);
     };
   }, []);
@@ -68,6 +80,14 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
       onClick: (e) => {
         if (e) e.preventDefault();
         onModeChange('inspector');
+      }
+    },
+    {
+      label: "Scan History",
+      href: "#history",
+      onClick: (e) => {
+        if (e) e.preventDefault();
+        setHistoryModalOpen(true);
       }
     },
     {
@@ -126,6 +146,28 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
                 <Database size={11} /> {queuedCount} CACHED
               </button>
             )}
+
+            {/* Statutory Scan History Button */}
+            <button
+              onClick={() => setHistoryModalOpen(true)}
+              style={{
+                background: 'rgba(56, 225, 217, 0.12)',
+                border: '1px solid rgba(56, 225, 217, 0.35)',
+                color: '#38E1D9',
+                padding: '2px 8px',
+                borderRadius: '3px',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                transition: 'all 0.2s ease'
+              }}
+              title="View Statutory Scan & Audit History Ledger"
+            >
+              <History size={11} /> Scan History ({historyCount})
+            </button>
 
             {/* Statutory Authentication Status */}
             {currentUser ? (
@@ -186,7 +228,7 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
                 }}
               >
                 <Lock size={11} />
-                Officer / Citizen Sign In
+                Officer / Inspector Sign In
               </button>
             )}
           </div>
@@ -305,6 +347,12 @@ export default function Header({ currentMode, onModeChange, onOpenOfflineQueue, 
             onModeChange('citizen');
           }
         }}
+      />
+
+      {/* Statutory Scan & Audit History Modal */}
+      <ScanHistoryModal
+        isOpen={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
       />
     </header>
   );
