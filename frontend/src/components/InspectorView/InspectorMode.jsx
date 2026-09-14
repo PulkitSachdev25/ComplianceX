@@ -7,6 +7,7 @@ import {
 import CameraRig from './CameraRig';
 import StatutoryAuditCard from './StatutoryAuditCard';
 import ChainOfCustodyLedger from './ChainOfCustodyLedger';
+import EvidenceTamperVerifier from './EvidenceTamperVerifier';
 import OfflineQueueModal from './OfflineQueueModal';
 import TargetedRescanModal from './TargetedRescanModal';
 import { offlineStorage } from '../../utils/offlineStorage';
@@ -908,14 +909,22 @@ export default function InspectorMode({
 
       {/* Audit Findings & Chain of Custody Displays for Active Unit */}
       {auditResult && (
-        <div id="statutory-audit-findings" className="grid-2" style={{ marginTop: '1.5rem' }}>
-          <StatutoryAuditCard
-            auditData={auditResult}
-            onTargetedRescan={handleTargetedRescan}
-            evaluatingRuleId={evaluatingRuleId}
+        <>
+          <div id="statutory-audit-findings" className="grid-2" style={{ marginTop: '1.5rem' }}>
+            <StatutoryAuditCard
+              auditData={auditResult}
+              onTargetedRescan={handleTargetedRescan}
+              evaluatingRuleId={evaluatingRuleId}
+            />
+            <ChainOfCustodyLedger auditData={auditResult} chainOfCustody={auditResult} geolocation={geolocation} panelsPerItem={panelsPerItem} />
+          </div>
+
+          {/* Court Evidence Tamper Detection Verification Widget */}
+          <EvidenceTamperVerifier
+            panelHashes={auditResult.panel_hashes || auditResult.chain_of_custody?.panel_hashes || {}}
+            docketId={auditResult.docket_id}
           />
-          <ChainOfCustodyLedger auditData={auditResult} chainOfCustody={auditResult} geolocation={geolocation} panelsPerItem={panelsPerItem} />
-        </div>
+        </>
       )}
 
       {/* 1-Shot Human-in-the-Loop Targeted Re-Scan Modal */}
