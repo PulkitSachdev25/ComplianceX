@@ -172,6 +172,26 @@ export default function InspectorMode({
     }
   };
 
+  // Purge obsolete panels & hashes if panelsPerItem changes
+  useEffect(() => {
+    setPanels((prev) => {
+      const updated = {};
+      for (let i = 1; i <= panelsPerItem; i++) {
+        const k = `panel_${i}`;
+        if (prev[k]) updated[k] = prev[k];
+      }
+      return updated;
+    });
+    setPanelHashes((prev) => {
+      const updated = {};
+      for (let i = 1; i <= panelsPerItem; i++) {
+        const k = `panel_${i}`;
+        if (prev[k]) updated[k] = prev[k];
+      }
+      return updated;
+    });
+  }, [panelsPerItem]);
+
   // Perform Legal Metrology Statutory Audit for given panels and hashes
   const auditUnitPanels = async (unitPanels, unitHashes) => {
     setLoading(true);
@@ -189,12 +209,15 @@ export default function InspectorMode({
 
     const activePanels = {};
     const activeHashes = {};
-    Object.entries(unitPanels || {}).forEach(([k, v]) => {
-      if (v && typeof v === 'string' && v.trim() !== '') activePanels[k] = v;
-    });
-    Object.entries(unitHashes || {}).forEach(([k, v]) => {
-      if (v && typeof v === 'string' && v.trim() !== '' && v !== '0'.repeat(64)) activeHashes[k] = v;
-    });
+    for (let i = 1; i <= panelsPerItem; i++) {
+      const key = `panel_${i}`;
+      if (unitPanels && unitPanels[key] && typeof unitPanels[key] === 'string' && unitPanels[key].trim() !== '') {
+        activePanels[key] = unitPanels[key];
+      }
+      if (unitHashes && unitHashes[key] && typeof unitHashes[key] === 'string' && unitHashes[key].trim() !== '' && unitHashes[key] !== '0'.repeat(64)) {
+        activeHashes[key] = unitHashes[key];
+      }
+    }
 
     const payload = {
       panels: activePanels,
@@ -216,14 +239,29 @@ export default function InspectorMode({
       }
 
       const data = await res.json();
+
+      // Enforce strict N-panel hashes based on active panelsPerItem
+      const sanitizedPanelHashes = {};
+      for (let i = 1; i <= panelsPerItem; i++) {
+        const k = `panel_${i}`;
+        sanitizedPanelHashes[k] = activeHashes[k] || data.panel_hashes?.[k] || data.chain_of_custody?.panel_hashes?.[k];
+      }
+
+      data.panel_hashes = sanitizedPanelHashes;
+      if (data.chain_of_custody) {
+        data.chain_of_custody.panel_hashes = sanitizedPanelHashes;
+        data.chain_of_custody.total_panels_hashed = panelsPerItem;
+      }
+      data.total_panels_hashed = panelsPerItem;
+
       setAuditResult(data);
 
       // Append or replace unit record in completedUnits
       const unitRecord = {
         unitIndex: currentUnitIndex + 1,
         auditResult: data,
-        panels: unitPanels,
-        panelHashes: unitHashes,
+        panels: activePanels,
+        panelHashes: activeHashes,
         docketId: data.docket_id,
         commodityName: data.commodity_name || `Unit ${currentUnitIndex + 1}`,
         isCompliant: data.is_compliant,
@@ -279,7 +317,7 @@ export default function InspectorMode({
           is_compliant: false,
           violations_count: 1,
           geolocation: userLocation,
-          panel_hashes: unitHashes
+          panel_hashes: activeHashes
         };
         offlineStorage.enqueue(fallbackDocket);
         refreshQueueCount();
@@ -295,9 +333,20 @@ export default function InspectorMode({
 
   // Called automatically by CameraRig when all panelsPerItem for current unit are captured
   const handleUnitPanelsComplete = (completedPanels, completedHashes) => {
-    setPanels(completedPanels);
-    setPanelHashes(completedHashes);
-    auditUnitPanels(completedPanels, completedHashes);
+    const activePanelsPayload = {};
+    const activeHashesPayload = {};
+    for (let i = 1; i <= panelsPerItem; i++) {
+      const key = `panel_${i}`;
+      if (completedPanels && completedPanels[key]) {
+        activePanelsPayload[key] = completedPanels[key];
+      }
+      if (completedHashes && completedHashes[key]) {
+        activeHashesPayload[key] = completedHashes[key];
+      }
+    }
+    setPanels(activePanelsPayload);
+    setPanelHashes(activeHashesPayload);
+    auditUnitPanels(activePanelsPayload, activeHashesPayload);
   };
 
   // Manual trigger button to execute compliance audit on current panels
@@ -314,7 +363,19 @@ export default function InspectorMode({
       if (!confirmContinue) return;
     }
 
-    await auditUnitPanels(panels, panelHashes);
+    const activePanelsPayload = {};
+    const activeHashesPayload = {};
+    for (let i = 1; i <= panelsPerItem; i++) {
+      const key = `panel_${i}`;
+      if (panels[key]) {
+        activePanelsPayload[key] = panels[key];
+      }
+      if (panelHashes[key]) {
+        activeHashesPayload[key] = panelHashes[key];
+      }
+    }
+
+    await auditUnitPanels(activePanelsPayload, activeHashesPayload);
   };
 
   // Proceed to next unit in the batch
@@ -853,7 +914,7 @@ export default function InspectorMode({
             onTargetedRescan={handleTargetedRescan}
             evaluatingRuleId={evaluatingRuleId}
           />
-          <ChainOfCustodyLedger auditData={auditResult} geolocation={geolocation} />
+          <ChainOfCustodyLedger auditData={auditResult} chainOfCustody={auditResult} geolocation={geolocation} panelsPerItem={panelsPerItem} />
         </div>
       )}
 

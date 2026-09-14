@@ -118,9 +118,9 @@ class TestRegulatoryEngines(unittest.TestCase):
         h5 = "5" * 64
         h6 = "6" * 64
 
-        # 1 leaf
+        # 1 leaf: fold with itself
         root1 = ChainOfCustody.compute_merkle_root([h1])
-        self.assertEqual(root1, h1)
+        self.assertEqual(root1, ChainOfCustody.hash_string(h1 + h1))
 
         # 2 leaves: hash(h1 + h2)
         root2 = ChainOfCustody.compute_merkle_root([h1, h2])

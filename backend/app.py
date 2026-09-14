@@ -273,20 +273,30 @@ def audit_legal_metrology(payload: InspectorAuditRequest):
     # 2. Run Rules Engine & USP Math validation
     validation_res = LegalMetrologyEngine.validate_audit(audit_data)
 
-    # 3. Dynamic SHA-256 computation over ONLY actual uploaded/received panels (1 to N)
-    panel_hashes = {}
-    if payload.panel_hashes:
-        for p_key, h_val in payload.panel_hashes.items():
-            if h_val and h_val != "0" * 64:
-                panel_hashes[p_key] = str(h_val)
+    # Cleanse any mock hashes leaked by preset dictionaries
+    if isinstance(audit_data, dict):
+        audit_data.pop("panel_hashes", None)
+        audit_data.pop("individual_hashes", None)
+        audit_data.pop("master_hash", None)
+        audit_data.pop("merkle_root", None)
+        audit_data.pop("raw_merkle_root", None)
+        audit_data.pop("master_evidence_sha256", None)
+        audit_data.pop("total_panels_hashed", None)
 
-    if panels:
-        for p_key, img_b64 in panels.items():
-            if p_key not in panel_hashes or not panel_hashes[p_key]:
-                panel_hashes[p_key] = ChainOfCustody.hash_string(str(img_b64))
+    # Strictly hash only the panels provided by the client
+    incoming_panels = payload.panels or {}
+    panel_hashes = {}
+    for k in sorted(incoming_panels.keys()):
+        v = incoming_panels[k]
+        if v and isinstance(v, str) and len(v.strip()) > 50:
+            panel_hashes[k] = ChainOfCustody.hash_string(str(v))
+
+    # Client-side hash fallback if frontend sent pre-computed hashes
+    if not panel_hashes and payload.panel_hashes:
+        panel_hashes = {k: v for k, v in payload.panel_hashes.items() if v}
 
     if not panel_hashes:
-        panel_hashes = {"panel_1": ChainOfCustody.hash_string(f"DUMMY_FRAME_{payload.preset_key or 'RAW'}")}
+        panel_hashes = {"panel_1": ChainOfCustody.hash_string("RECORD_LEAF_1")}
 
     # 4. Generate Master Chain of Custody ledger with combined Master Hash and variable-leaf Merkle root
     geo_input = payload.location or payload.geolocation or {
@@ -306,6 +316,7 @@ def audit_legal_metrology(payload: InspectorAuditRequest):
         "formatted_address": formatted_addr
     }
 
+    # Generate custody ledger strictly matching active leaf count
     coc = ChainOfCustody.generate_chain_of_custody(
         panel_hashes=panel_hashes,
         gps_coords=geo,
@@ -315,11 +326,13 @@ def audit_legal_metrology(payload: InspectorAuditRequest):
     checklist = generate_rule_checklist(validation_res, audit_data)
     usp_audit = validation_res.get("usp_math_audit", {})
 
-    # Merge into complete audit docket object
     docket = {
         **validation_res,
         **audit_data,
         **coc,
+        "panel_hashes": panel_hashes,
+        "total_panels_hashed": len(panel_hashes),
+        "chain_of_custody": coc,
         "product_name": audit_data.get("commodity_name"),
         "mfg_expiry_dates": audit_data.get("mfg_date"),
         "statutory_calculated_usp": usp_audit.get("display_str") or (f"Rs. {usp_audit.get('calculated_usp')} {usp_audit.get('statutory_unit', '')}" if usp_audit.get('calculated_usp') else "N/A"),

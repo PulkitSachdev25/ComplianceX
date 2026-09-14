@@ -43,6 +43,9 @@ class ChainOfCustody:
         if not leaf_hashes:
             return cls.hash_string("EMPTY_EVIDENTIARY_RECORD")
 
+        if len(leaf_hashes) == 1:
+            return cls.hash_string(leaf_hashes[0] + leaf_hashes[0])
+
         current_level = list(leaf_hashes)
         while len(current_level) > 1:
             next_level = []
